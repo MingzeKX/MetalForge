@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/about.schema.json",
+  "title": "MetalForge 关于对话框内容",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "headline": { "type": "string", "maxLength": 120 },
+    "subheadline": { "type": "string", "maxLength": 160 },
+    "description": { "type": "string", "maxLength": 1200 },
+    "buildInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "showRuntime": { "type": "boolean" },
+        "showPlatform": { "type": "boolean" },
+        "showCommit": { "type": "boolean" },
+        "showBuildDate": { "type": "boolean" }
+      }
+    },
+    "credits": {
+      "type": "array",
+      "maxItems": 40,
+      "items": {
+        "type": "object",
+        "required": ["label", "value"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "value": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "uri": { "type": "string", "maxLength": 500 }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "body"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "body": { "type": "string", "maxLength": 4000 }
+        }
+      }
+    }
+  }
+}

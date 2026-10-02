@@ -1,0 +1,21 @@
+{
+  "$schema": "./schema/licenses.schema.json",
+  "title": "许可协议",
+  "introduction": "MetalForge 本体以 MIT 许可发布。下方列出本体许可全文，以及随程序分发的第三方组件许可摘要。完整第三方许可文本随发布包提供于 licenses/ 目录。",
+  "documents": [
+    {
+      "id": "metalforge-mit",
+      "title": "MIT License — MetalForge",
+      "spdx": "MIT",
+      "isPrimary": true,
+      "text": "MIT License\n\nCopyright (c) 2026 MetalForge Contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE."
+    },
+    {
+      "id": "third-party",
+      "title": "第三方组件",
+      "spdx": "Multiple",
+      "isPrimary": false,
+      "text": "Avalonia UI — MIT License — https://github.com/AvaloniaUI/Avalonia\nAvaloniaEdit — MIT License — https://github.com/AvaloniaUI/AvaloniaEdit\nCommunityToolkit.Mvvm — MIT License — https://github.com/CommunityToolkit/dotnet\nMicrosoft.Extensions.* — MIT License — https://github.com/dotnet/runtime\nxUnit.net v3 — Apache License 2.0 — https://github.com/xunit/xunit\n\n外部工具（QEMU、GCC、LLVM、NASM、OpenOCD、xorriso、GRUB、EDK II、U-Boot 等）由用户自行获取，\n各自遵循其原始许可；MetalForge 不分发、不修改这些工具，仅调用其命令行接口。"
+    }
+  ]
+}

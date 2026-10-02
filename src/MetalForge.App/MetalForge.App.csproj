@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    MetalForge.App —— Avalonia 桌面应用（唯一包含 UI 类型的工程）。
+    Core 提供全部逻辑，App 只做装配、绑定与呈现。
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>MetalForge.App</RootNamespace>
+    <AssemblyName>MetalForge</AssemblyName>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Avalonia 需要可空的 XAML 资源 -->
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <ApplicationIcon>Assets\metalforge.ico</ApplicationIcon>
+    <!-- 品牌信息来自 assets/branding/app.json；此处仅放程序集级最小元数据 -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 应用图标需要同时作为资源，窗口图标才能用同一份文件 -->
+    <AvaloniaResource Include="Assets\**" />
+    <None Include="..\..\assets\**" LinkBase="assets" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Label="测试可见性">
+    <InternalsVisibleTo Include="MetalForge.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MetalForge.Core\MetalForge.Core.csproj" />
+    <ProjectReference Include="..\MetalForge.Templates\MetalForge.Templates.csproj" />
+  </ItemGroup>
+
+</Project>

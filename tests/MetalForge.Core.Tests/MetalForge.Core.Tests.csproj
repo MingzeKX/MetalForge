@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    测试工程。注意两点与常规模板不同：
+      1) 使用 xunit.v3.mtp-v2（Microsoft.Testing.Platform 版本），
+         因为 .NET 10 SDK 已移除 VSTest 路径支持；
+      2) 必须设置 TestingPlatformDotnetTestSupport，否则 dotnet test 会报
+         "Testing with VSTest target is no longer supported"。
+    已知问题：dotnet test 在本机 SDK 10.0.401 + xunit.v3 4.0.1 组合下会报告
+    "运行了零个测试"（退出码 5）。因此仓库统一用 scripts/Test.ps1 直接运行测试
+    程序集（Microsoft.Testing.Platform 可执行模式），该方式已实测通过。
+  -->
+  <PropertyGroup>
+    <RootNamespace>MetalForge.Core.Tests</RootNamespace>
+    <AssemblyName>MetalForge.Core.Tests</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- 测试项目不参与发布，关闭警告即错误以免第三方分析器噪声阻塞交付 -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.mtp-v2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MetalForge.Core\MetalForge.Core.csproj" />
+    <!-- 架构测试需要检查 App 层：验证 XAML/ViewModels 里没有硬编码视觉参数 -->
+    <ProjectReference Include="..\..\src\MetalForge.App\MetalForge.App.csproj" />
+  </ItemGroup>
+
+</Project>

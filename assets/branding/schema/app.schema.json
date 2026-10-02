@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/app.schema.json",
+  "title": "MetalForge 应用品牌",
+  "description": "驱动应用名、版本、标语、官网链接、窗口默认尺寸、启动画面与资源路径。修改本文件即可换品牌，无需重新编译。",
+  "type": "object",
+  "required": ["id", "name", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "publisher": { "type": "string", "maxLength": 120 },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$",
+      "description": "语义化版本；发布时由 CI 覆盖"
+    },
+    "tagline": { "type": "string", "maxLength": 120 },
+    "description": { "type": "string", "maxLength": 600 },
+    "copyright": { "type": "string", "maxLength": 200 },
+    "links": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "uri": { "type": "string", "maxLength": 500 }
+        }
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "titleTemplate": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "可用占位符：{app} {document} {dirtyIndicator}"
+        },
+        "defaultWidth": { "type": "integer", "minimum": 640, "maximum": 10000 },
+        "defaultHeight": { "type": "integer", "minimum": 480, "maximum": 10000 },
+        "minimumWidth": { "type": "integer", "minimum": 320, "maximum": 4000 },
+        "minimumHeight": { "type": "integer", "minimum": 240, "maximum": 4000 },
+        "startMaximized": { "type": "boolean" },
+        "rememberSizeAndPosition": { "type": "boolean" }
+      }
+    },
+    "splash": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "showWhileLoading": { "type": "boolean" },
+        "minimumDurationMilliseconds": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "image": { "type": "string", "description": "相对 assets/ 的路径，建议 SVG" },
+        "backgroundColor": { "type": "string", "pattern": "^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+        "foregroundColor": { "type": "string", "pattern": "^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+        "showVersion": { "type": "boolean" },
+        "showStatus": { "type": "boolean" }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "icon": { "type": "string" },
+        "logo": { "type": "string" },
+        "logoMonochrome": { "type": "string" },
+        "theme": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "layout": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
+      }
+    }
+  }
+}

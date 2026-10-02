@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    MetalForge.Templates —— 新项目向导的模板与脚手架逻辑。
+    模板文件作为嵌入资源随程序集发布，保证"离线可用、版本自洽"。
+  -->
+  <PropertyGroup>
+    <RootNamespace>MetalForge.Templates</RootNamespace>
+    <AssemblyName>MetalForge.Templates</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Content\**\*" LogicalName="MetalForge.Templates.Content.%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MetalForge.Core\MetalForge.Core.csproj" />
+  </ItemGroup>
+
+</Project>

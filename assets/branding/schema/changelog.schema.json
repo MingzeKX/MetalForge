@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/changelog.schema.json",
+  "title": "MetalForge 更新日志",
+  "description": "更新日志由本文件驱动；更新检查读取它来展示新版本内容，不硬编码在代码里。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "categories": {
+      "type": "object",
+      "description": "分类 id 到显示名的映射（added/changed/fixed/...）",
+      "additionalProperties": { "type": "string", "maxLength": 40 }
+    },
+    "releases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["version"],
+        "additionalProperties": false,
+        "properties": {
+          "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$" },
+          "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+          "channel": { "enum": ["stable", "beta", "alpha"] },
+          "summary": { "type": "string", "maxLength": 600 },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["category", "text"],
+              "additionalProperties": false,
+              "properties": {
+                "category": { "type": "string", "maxLength": 40 },
+                "text": { "type": "string", "minLength": 1, "maxLength": 600 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/layout.schema.json",
+  "title": "MetalForge 布局预设",
+  "description": "描述 IDE 面板树的初始结构、尺寸与默认标签页。用户可在运行时拖动，选择预设即可恢复。",
+  "type": "object",
+  "required": ["id", "displayName", "root"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "displayName": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "integer", "minimum": 640 },
+        "height": { "type": "integer", "minimum": 480 },
+        "maximized": { "type": "boolean" }
+      }
+    },
+    "toolbar": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visible": { "type": "boolean" },
+        "items": {
+          "type": "array",
+          "items": { "type": "string", "description": "命令 id，例如 build.build / run.qemu / debug.start" }
+        }
+      }
+    },
+    "menuBar": { "type": "boolean" },
+    "statusBar": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visible": { "type": "boolean" },
+        "items": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "root": { "$ref": "#/$defs/node" }
+  },
+  "$defs": {
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/splitNode" },
+        { "$ref": "#/$defs/panelNode" },
+        { "$ref": "#/$defs/documentNode" }
+      ]
+    },
+    "splitNode": {
+      "type": "object",
+      "required": ["type", "orientation", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "split" },
+        "orientation": { "enum": ["horizontal", "vertical"] },
+        "children": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/node" } },
+        "proportions": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+          "description": "与 children 一一对应的比例，总和应为 1"
+        }
+      }
+    },
+    "panelNode": {
+      "type": "object",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "panel" },
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "tabs": { "type": "array", "items": { "type": "string" }, "description": "该面板内的标签页 id 列表，第一项为当前选中" },
+        "visible": { "type": "boolean" },
+        "collapsible": { "type": "boolean" },
+        "size": { "type": "number", "description": "停靠时的建议像素尺寸" },
+        "minimumSize": { "type": "number" }
+      }
+    },
+    "documentNode": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "document" },
+        "initialTabs": { "type": "array", "items": { "type": "string" }, "description": "启动时打开的标签页：welcome / project-overview" }
+      }
+    }
+  }
+}

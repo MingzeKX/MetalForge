@@ -1,0 +1,71 @@
+{
+  "$schema": "./schema/theme.schema.json",
+  "id": "metalforge-dark",
+  "displayName": "MetalForge Dark",
+  "description": "默认主题：低饱和冷灰 + 钢蓝强调色，靠间距与明度建立层级。",
+  "variant": "dark",
+  "palette": {
+    "background": "#16181C",
+    "surface": "#1C1F24",
+    "surfaceRaised": "#22262C",
+    "surfaceSunken": "#121417",
+    "foreground": "#D7DAE0",
+    "foregroundMuted": "#8A9099",
+    "foregroundDisabled": "#585E66",
+    "accent": "#7AA2C8",
+    "accentHover": "#8FB4D9",
+    "accentPressed": "#5C7FA6",
+    "border": "#2A2F36",
+    "borderStrong": "#3A4048",
+    "selection": "#2E4152",
+    "success": "#7FA88A",
+    "warning": "#C8A87A",
+    "danger": "#C88A8A",
+    "info": "#7AA2C8"
+  },
+  "metrics": {
+    "cornerRadius": 6,
+    "cornerRadiusSmall": 4,
+    "spacingUnit": 4,
+    "fontSizeBase": 13,
+    "fontSizeSmall": 12,
+    "fontSizeHeading": 18,
+    "density": "comfortable",
+    "panelPadding": 8,
+    "toolbarHeight": 38,
+    "statusBarHeight": 24,
+    "tabHeight": 32
+  },
+  "editor": {
+    "fontFamily": "Cascadia Mono, Consolas, JetBrains Mono, monospace",
+    "fontSize": 13,
+    "lineHeight": 1.5,
+    "showLineNumbers": true,
+    "highlightCurrentLine": true,
+    "wordWrap": false,
+    "tabSize": 4,
+    "convertTabsToSpaces": true
+  },
+  "terminal": {
+    "fontFamily": "Cascadia Mono, Consolas, monospace",
+    "fontSize": 12,
+    "ansiPalette": {
+      "black": "#1C1F24",
+      "red": "#C88A8A",
+      "green": "#7FA88A",
+      "yellow": "#C8A87A",
+      "blue": "#7AA2C8",
+      "magenta": "#B08AB0",
+      "cyan": "#7FA8A8",
+      "white": "#D7DAE0",
+      "brightBlack": "#585E66",
+      "brightRed": "#E0A0A0",
+      "brightGreen": "#98C0A2",
+      "brightYellow": "#E0C090",
+      "brightBlue": "#8FB4D9",
+      "brightMagenta": "#C8A0C8",
+      "brightCyan": "#98C0C0",
+      "brightWhite": "#F0F2F5"
+    }
+  }
+}

@@ -1,0 +1,119 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MetalForge.App.ViewModels"
+        x:Class="MetalForge.App.Views.MainWindow"
+        x:DataType="vm:WelcomeViewModel"
+        Title="MetalForge"
+        Background="{DynamicResource MfBackground}"
+        FontSize="{DynamicResource MfFontSizeBase}"
+        Width="1440" Height="900">
+  <!--
+    M1 目标是"配置驱动的可运行外壳"：菜单栏 + 工具栏 + 三栏骨架 + 状态栏。
+    面板内容（项目树、编辑器、输出）在后续里程碑填充。
+  -->
+  <DockPanel LastChildFill="True">
+
+    <!-- 状态栏（底部，先声明先停靠） -->
+    <Border DockPanel.Dock="Bottom"
+            Height="{DynamicResource MfStatusBarHeight}"
+            Background="{DynamicResource MfSurface}"
+            BorderBrush="{DynamicResource MfBorder}"
+            BorderThickness="0,1,0,0">
+      <Grid ColumnDefinitions="Auto,*,Auto" Margin="8,0">
+        <TextBlock Grid.Column="0"
+                   x:Name="statusBarEnvironment"
+                   VerticalAlignment="Center"
+                   FontSize="{DynamicResource MfFontSizeSmall}"
+                   Foreground="{DynamicResource MfForegroundMuted}"
+                   Text="{Binding EnvironmentSummary}" />
+        <TextBlock Grid.Column="2"
+                   x:Name="statusBarVersion"
+                   VerticalAlignment="Center"
+                   FontSize="{DynamicResource MfFontSizeSmall}"
+                   Foreground="{DynamicResource MfForegroundMuted}"
+                   Text="{Binding VersionText}" />
+      </Grid>
+    </Border>
+
+    <!-- 工具栏 -->
+    <Border DockPanel.Dock="Top"
+            Height="{DynamicResource MfToolbarHeight}"
+            Background="{DynamicResource MfSurface}"
+            BorderBrush="{DynamicResource MfBorder}"
+            BorderThickness="0,0,0,1">
+      <StackPanel Orientation="Horizontal"
+                  VerticalAlignment="Center"
+                  Spacing="8"
+                  Margin="8,0">
+        <TextBlock x:Name="toolbarBrand"
+                   VerticalAlignment="Center"
+                   FontWeight="SemiBold"
+                   Foreground="{DynamicResource MfForeground}"
+                   Text="{Binding Headline}" />
+        <TextBlock VerticalAlignment="Center"
+                   Foreground="{DynamicResource MfForegroundMuted}"
+                   Text="·" />
+        <TextBlock x:Name="toolbarStage"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource MfForegroundMuted}"
+                   Text="M0 骨架：配置系统已就绪，构建/运行/调试面板将在 M2–M3 接入" />
+      </StackPanel>
+    </Border>
+
+    <!-- 三栏骨架 -->
+    <Grid ColumnDefinitions="260,4,*,4,300" Margin="8">
+      <Border Grid.Column="0"
+              Background="{DynamicResource MfSurface}"
+              CornerRadius="{DynamicResource MfCornerRadius}"
+              Padding="{DynamicResource MfPanelPadding}">
+        <TextBlock Foreground="{DynamicResource MfForegroundMuted}" Text="项目浏览器（M1）" />
+      </Border>
+
+      <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns" />
+
+      <Border Grid.Column="2"
+              Margin="8,0"
+              Background="{DynamicResource MfSurface}"
+              CornerRadius="{DynamicResource MfCornerRadius}"
+              Padding="{DynamicResource MfSpace4}">
+        <StackPanel Spacing="8" VerticalAlignment="Top">
+          <TextBlock x:Name="welcomeHeadline"
+                     FontSize="{DynamicResource MfFontSizeHeading}"
+                     FontWeight="SemiBold"
+                     Foreground="{DynamicResource MfForeground}"
+                     Text="{Binding Headline}" />
+          <TextBlock x:Name="welcomeTagline"
+                     Foreground="{DynamicResource MfAccent}"
+                     Text="{Binding Tagline}" />
+          <TextBlock x:Name="welcomeDescription"
+                     TextWrapping="Wrap"
+                     MaxWidth="620"
+                     HorizontalAlignment="Left"
+                     Foreground="{DynamicResource MfForegroundMuted}"
+                     Text="{Binding Description}" />
+          <TextBlock x:Name="welcomeConfiguration"
+                     Margin="0,8,0,0"
+                     TextWrapping="Wrap"
+                     MaxWidth="620"
+                     HorizontalAlignment="Left"
+                     Foreground="{DynamicResource MfSuccess}"
+                     Text="{Binding ConfigurationSummary}" />
+          <TextBlock TextWrapping="Wrap"
+                     MaxWidth="620"
+                     HorizontalAlignment="Left"
+                     Foreground="{DynamicResource MfForegroundMuted}"
+                     Text="提示：编辑 assets/branding/app.json 或 assets/themes/*.theme.json 后保存，界面会立即更新（配置热重载）。" />
+        </StackPanel>
+      </Border>
+
+      <GridSplitter Grid.Column="3" Background="Transparent" ResizeDirection="Columns" />
+
+      <Border Grid.Column="4"
+              Background="{DynamicResource MfSurface}"
+              CornerRadius="{DynamicResource MfCornerRadius}"
+              Padding="{DynamicResource MfPanelPadding}">
+        <TextBlock Foreground="{DynamicResource MfForegroundMuted}" Text="属性面板（M1）" />
+      </Border>
+    </Grid>
+  </DockPanel>
+</Window>

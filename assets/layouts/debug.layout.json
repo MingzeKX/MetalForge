@@ -1,0 +1,96 @@
+{
+  "$schema": "./schema/layout.schema.json",
+  "id": "debug",
+  "displayName": "调试布局",
+  "description": "调试优先：放大底部调试区，串口与监视器并排，编辑器让位。",
+  "window": { "width": 1600, "height": 960, "maximized": false },
+  "menuBar": true,
+  "toolbar": {
+    "visible": true,
+    "items": [
+      "build.build",
+      "separator",
+      "debug.start",
+      "debug.pause",
+      "debug.stepOver",
+      "debug.stepInto",
+      "debug.stepOut",
+      "debug.restart",
+      "debug.stop",
+      "separator",
+      "debug.toggleBreakpoint",
+      "run.stop"
+    ]
+  },
+  "statusBar": {
+    "visible": true,
+    "items": ["status.arch", "status.debugState", "status.currentFrame", "status.toolchain", "status.problems"]
+  },
+  "root": {
+    "type": "split",
+    "orientation": "vertical",
+    "proportions": [0.58, 0.42],
+    "children": [
+      {
+        "type": "split",
+        "orientation": "horizontal",
+        "proportions": [0.16, 0.62, 0.22],
+        "children": [
+          {
+            "type": "panel",
+            "id": "explorer",
+            "title": "项目",
+            "tabs": ["project.files", "project.symbols"],
+            "collapsible": true,
+            "size": 260,
+            "minimumSize": 180
+          },
+          { "type": "document", "initialTabs": ["welcome"] },
+          {
+            "type": "panel",
+            "id": "inspector",
+            "title": "调试",
+            "tabs": ["debug.stack", "debug.variables", "debug.registers", "debug.breakpoints", "debug.memory"],
+            "collapsible": true,
+            "size": 340,
+            "minimumSize": 240
+          }
+        ]
+      },
+      {
+        "type": "split",
+        "orientation": "horizontal",
+        "proportions": [0.34, 0.42, 0.24],
+        "children": [
+          {
+            "type": "panel",
+            "id": "bottomLeft",
+            "title": "控制台",
+            "tabs": ["debug.console", "output.build", "output.problems"],
+            "collapsible": true,
+            "size": 420,
+            "minimumSize": 160
+          },
+          {
+            "type": "panel",
+            "id": "bottomCenter",
+            "title": "串口",
+            "tabs": ["terminal.serial", "terminal.shell"],
+            "collapsible": true,
+            "size": 520,
+            "minimumSize": 160
+          },
+          {
+            "type": "panel",
+            "id": "bottomRight",
+            "title": "监视器",
+            "tabs": ["debug.monitor", "ai.agent"],
+            "collapsible": true,
+            "size": 300,
+            "minimumSize": 160
+          }
+        ]
+      }
+    ]
+  }
+}

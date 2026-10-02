@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MetalForge.App/MetalForge.App.csproj" />
+    <Project Path="src/MetalForge.Core/MetalForge.Core.csproj" />
+    <Project Path="src/MetalForge.Templates/MetalForge.Templates.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MetalForge.Core.Tests/MetalForge.Core.Tests.csproj" />
+  </Folder>
+</Solution>

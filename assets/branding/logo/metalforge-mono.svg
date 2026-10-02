@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="MetalForge 单色标记">
+  <title>MetalForge Monochrome</title>
+  <!-- 单色版本：仅用 currentColor 语义，供高对比度主题与状态栏使用 -->
+  <g fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M44 156 h168"/>
+    <path d="M96 156 l10 30 h52 l10 -30"/>
+    <path d="M104 214 h48"/>
+    <path d="M84 116 h88"/>
+    <path d="M96 96 h64"/>
+    <path d="M120 72 v24"/>
+  </g>
+</svg>

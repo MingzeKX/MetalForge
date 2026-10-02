@@ -1,0 +1,79 @@
+{
+  "$schema": "./schema/layout.schema.json",
+  "id": "default",
+  "displayName": "默认布局",
+  "description": "经典 IDE 布局：左项目树、中编辑器、右属性、底部输出/终端/调试/串口。",
+  "window": { "width": 1440, "height": 900, "maximized": false },
+  "menuBar": true,
+  "toolbar": {
+    "visible": true,
+    "items": [
+      "project.new",
+      "project.open",
+      "separator",
+      "build.build",
+      "build.rebuild",
+      "build.clean",
+      "separator",
+      "run.qemu",
+      "run.stop",
+      "separator",
+      "debug.start",
+      "debug.stepOver",
+      "debug.stepInto",
+      "debug.stop",
+      "separator",
+      "tools.toolchainHealth",
+      "view.commandPalette"
+    ]
+  },
+  "statusBar": {
+    "visible": true,
+    "items": ["status.arch", "status.bootMethod", "status.configuration", "status.toolchain", "status.buildState", "status.cursor", "status.problems"]
+  },
+  "root": {
+    "type": "split",
+    "orientation": "vertical",
+    "proportions": [0.76, 0.24],
+    "children": [
+      {
+        "type": "split",
+        "orientation": "horizontal",
+        "proportions": [0.2, 0.62, 0.18],
+        "children": [
+          {
+            "type": "panel",
+            "id": "explorer",
+            "title": "项目",
+            "tabs": ["project.files", "project.templates", "project.symbols"],
+            "collapsible": true,
+            "size": 300,
+            "minimumSize": 200
+          },
+          {
+            "type": "document",
+            "initialTabs": ["welcome"]
+          },
+          {
+            "type": "panel",
+            "id": "inspector",
+            "title": "属性",
+            "tabs": ["inspector.properties", "inspector.artifact", "inspector.layoutMap"],
+            "collapsible": true,
+            "size": 320,
+            "minimumSize": 220
+          }
+        ]
+      },
+      {
+        "type": "panel",
+        "id": "bottom",
+        "title": "输出",
+        "tabs": ["output.build", "output.problems", "terminal.shell", "terminal.serial", "debug.console", "debug.monitor", "ai.agent"],
+        "collapsible": true,
+        "size": 260,
+        "minimumSize": 120
+      }
+    ]
+  }
+}

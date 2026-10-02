@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/contributors.schema.json",
+  "title": "MetalForge 贡献者名单",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "roles": {
+      "type": "object",
+      "description": "角色 id 到显示名的映射，便于本地化",
+      "additionalProperties": { "type": "string", "maxLength": 40 }
+    },
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "role": { "type": "string", "maxLength": 40 },
+          "note": { "type": "string", "maxLength": 300 },
+          "uri": { "type": "string", "maxLength": 500 }
+        }
+      }
+    }
+  }
+}

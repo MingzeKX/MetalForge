@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 300" width="560" height="300" role="img" aria-label="MetalForge 启动画面">
+  <title>MetalForge Splash</title>
+  <defs>
+    <linearGradient id="splashIngot" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8FB4D9"/>
+      <stop offset="100%" stop-color="#5C7FA6"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="560" height="300" fill="none"/>
+  <g transform="translate(56 74) scale(0.62)">
+    <path d="M56 150 h144 v16 c0 6 -4 10 -10 10 h-38 l-8 26 h20 v12 h-72 v-12 h20 l-8 -26 h-38 c-6 0 -10 -4 -10 -10 z" fill="#2E343C"/>
+    <g transform="rotate(-12 128 108)">
+      <rect x="78" y="86" width="100" height="44" rx="10" fill="url(#splashIngot)"/>
+    </g>
+    <g fill="#C8A87A">
+      <circle cx="186" cy="70" r="5"/>
+      <circle cx="206" cy="90" r="3.5"/>
+    </g>
+  </g>
+  <text x="212" y="150" font-family="Segoe UI, Inter, sans-serif" font-size="52" font-weight="600" fill="#D7DAE0">MetalForge</text>
+  <text x="214" y="186" font-family="Segoe UI, Inter, sans-serif" font-size="18" fill="#8A9099">多架构操作系统开发环境</text>
+</svg>

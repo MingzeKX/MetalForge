@@ -1,0 +1,13 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MetalForge.App.App"
+             RequestedThemeVariant="Dark">
+  <!--
+    设计约束：这里不写任何颜色与尺寸。
+    全部视觉参数由 assets/themes/*.theme.json 驱动，
+    由 ThemeResourceService 在启动时翻译为 Mf* 资源键。
+  -->
+  <Application.Styles>
+    <FluentTheme />
+  </Application.Styles>
+</Application>

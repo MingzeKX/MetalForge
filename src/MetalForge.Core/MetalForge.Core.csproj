@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    MetalForge.Core —— 纯逻辑层。
+    硬约束：本工程不得引用任何 UI 程序集（尤其 Avalonia.*）。
+    该约束由 tests/MetalForge.Core.Tests 的架构测试强制验证。
+  -->
+  <PropertyGroup>
+    <RootNamespace>MetalForge.Core</RootNamespace>
+    <AssemblyName>MetalForge.Core</AssemblyName>
+    <!-- Core 无 UI，明确剔除桌面框架引用 -->
+    <UseWpf>false</UseWpf>
+    <UseWindowsForms>false</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup Label="基础设施（无 UI 依赖）">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup Label="测试可见性">
+    <InternalsVisibleTo Include="MetalForge.Core.Tests" />
+  </ItemGroup>
+
+</Project>

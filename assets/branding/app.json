@@ -1,0 +1,42 @@
+{
+  "$schema": "./schema/app.schema.json",
+  "id": "metalforge",
+  "name": "MetalForge",
+  "publisher": "MetalForge Project",
+  "version": "0.0.1",
+  "tagline": "把写操作系统，变成写普通 C 程序",
+  "description": "面向 Windows 的多架构操作系统开发 IDE：从引导、内核、驱动到运行时，覆盖 x86_64、i686、AArch64、ARM32、RISC-V 与嵌入式目标。",
+  "copyright": "Copyright (c) 2026 MetalForge Contributors",
+  "links": [
+    { "id": "home", "label": "项目主页", "uri": "https://example.invalid/metalforge" },
+    { "id": "docs", "label": "文档", "uri": "https://example.invalid/metalforge/docs" },
+    { "id": "issues", "label": "问题反馈", "uri": "https://example.invalid/metalforge/issues" }
+  ],
+  "window": {
+    "title": "MetalForge",
+    "titleTemplate": "{document}{dirtyIndicator} — {app}",
+    "defaultWidth": 1280,
+    "defaultHeight": 720,
+    "minimumWidth": 1024,
+    "minimumHeight": 640,
+    "startMaximized": false,
+    "rememberSizeAndPosition": true
+  },
+  "splash": {
+    "enabled": true,
+    "showWhileLoading": true,
+    "minimumDurationMilliseconds": 400,
+    "image": "branding/splash/splash.svg",
+    "backgroundColor": "#16181C",
+    "foregroundColor": "#D7DAE0",
+    "showVersion": true,
+    "showStatus": true
+  },
+  "assets": {
+    "icon": "branding/logo/metalforge.ico",
+    "logo": "branding/logo/metalforge.svg",
+    "logoMonochrome": "branding/logo/metalforge-mono.svg",
+    "theme": "metalforge-dark",
+    "layout": "default"
+  }
+}

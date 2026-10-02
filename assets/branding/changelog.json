@@ -1,0 +1,26 @@
+{
+  "$schema": "./schema/changelog.schema.json",
+  "title": "更新日志",
+  "categories": {
+    "added": "新增",
+    "changed": "变更",
+    "fixed": "修复",
+    "removed": "移除",
+    "security": "安全",
+    "docs": "文档"
+  },
+  "releases": [
+    {
+      "version": "0.0.1",
+      "date": "2026-02-01",
+      "channel": "alpha",
+      "summary": "仓库基建与设计定稿：分层工程、配置驱动外壳、命名与质量约束落地。",
+      "entries": [
+        { "category": "added", "text": "建立 App / Core / Templates 分层工程与中央包版本管理" },
+        { "category": "added", "text": "三级配置系统（内置 → 用户 → 项目）与 JSON 元信息驱动外壳" },
+        { "category": "added", "text": "品牌、主题、布局资源全部外置为 assets/ 下的 JSON 与图形资源" },
+        { "category": "docs", "text": "DESIGN.md、DEPENDENCIES.md、ADR 与手动验证清单" }
+      ]
+    }
+  ]
+}

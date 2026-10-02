@@ -1,0 +1,28 @@
+{
+  "$schema": "./schema/about.schema.json",
+  "title": "关于 MetalForge",
+  "headline": "MetalForge",
+  "subheadline": "多架构操作系统开发环境",
+  "description": "MetalForge 把交叉工具链、引导流程、QEMU 运行、GDB 调试与固件烧录编排成一条闭环，让裸机开发具备普通应用开发的迭代速度。",
+  "buildInfo": {
+    "showRuntime": true,
+    "showPlatform": true,
+    "showCommit": true,
+    "showBuildDate": true
+  },
+  "credits": [
+    { "label": "界面框架", "value": "Avalonia UI", "uri": "https://avaloniaui.net" },
+    { "label": "编辑器组件", "value": "AvaloniaEdit", "uri": "https://github.com/AvaloniaUI/AvaloniaEdit" },
+    { "label": "MVVM 工具包", "value": "CommunityToolkit.Mvvm", "uri": "https://github.com/CommunityToolkit/dotnet" },
+    { "label": "参考标准", "value": "OSDev Wiki", "uri": "https://wiki.osdev.org" },
+    { "label": "固件", "value": "TianoCore EDK II / OVMF", "uri": "https://github.com/tianocore/edk2" },
+    { "label": "模拟器", "value": "QEMU", "uri": "https://www.qemu.org" }
+  ],
+  "sections": [
+    {
+      "id": "thanks",
+      "title": "致谢",
+      "body": "感谢所有为开源 OSDev 生态做出贡献的人：编译器、链接器、引导程序、模拟器与文档的维护者。没有他们，这个 IDE 无从谈起。"
+    }
+  ]
+}

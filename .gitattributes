@@ -1,0 +1,83 @@
+# MetalForge .gitattributes
+#
+# 行尾策略（与 .editorconfig 保持一致）：
+#   - 文本源码统一以 LF 存入仓库，检出时按平台转换（Windows 上为 CRLF），
+#     这样跨机器协作不会产生"整文件都被改动"的噪声 diff；
+#   - 二进制资源必须显式标记，否则 git 会尝试做行尾转换并损坏文件。
+#
+# 注意：本文件自身与 .gitignore 使用 LF，且在 Windows 上也不会被转换。
+
+* text=auto eol=lf
+
+# ---------------------------------------------------------------------------
+# 二进制资源：禁止任何转换与 diff
+# ---------------------------------------------------------------------------
+*.ico   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+*.zip   binary
+*.7z    binary
+*.nupkg binary
+*.snupkg binary
+*.pdf   binary
+
+# 测试用 OSDev 二进制固件/产物（若将来纳入 fixtures，必须视为二进制）
+*.elf   binary
+*.efi   binary
+*.iso   binary
+*.img   binary
+*.uf2   binary
+*.hex   binary
+*.bin   binary
+*.o     binary
+*.a     binary
+
+# ---------------------------------------------------------------------------
+# 文本类型：明确语言，便于 GitHub 统计与 diff 表现
+# ---------------------------------------------------------------------------
+*.cs        text diff=csharp
+*.axaml     text
+*.xaml      text
+*.csproj    text
+*.props     text
+*.targets   text
+*.slnx      text
+*.json      text
+*.jsonc     text
+*.md        text
+*.ps1       text
+*.psm1      text
+*.sh        text eol=lf
+*.yml       text
+*.yaml      text
+*.xshd      text
+*.ld        text
+*.s         text
+*.S         text
+*.asm       text
+*.nasm      text
+*.inf       text
+*.dec       text
+*.dsc       text
+*.dts       text
+*.dtsi      text
+
+# OSDev 相关文件类型识别（让 diff 视图与编辑器高亮更合适）
+*.ld   diff=text
+*.s    diff=text
+*.S    diff=text
+*.asm  diff=text
+*.xshd diff=text
+
+# ---------------------------------------------------------------------------
+# 生成文件：从语言统计中排除
+# ---------------------------------------------------------------------------
+Directory.Packages.props linguist-generated=false
+global.json              linguist-generated=false
