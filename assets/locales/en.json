@@ -90,7 +90,9 @@
       "groupBuild": "Build",
       "groupRun": "Run",
       "groupDebug": "Debug",
-      "groupView": "View"
+      "groupView": "View",
+      "notImplemented": "Planned for a later milestone",
+      "menuBar": "Menu bar"
     },
     "panel": {
       "explorer": "Project",
@@ -152,7 +154,17 @@
       "stepOpenProject": "Open an existing project: File → Open Project…",
       "stepToolchain": "Check installed tools: Tools → Toolchain Health",
       "stepDocs": "Read the design and usage docs: Help → Documentation",
-      "configHint": "Tip: edit assets/branding/app.json or assets/themes/*.theme.json and save; the UI updates immediately."
+      "configHint": "Tip: edit assets/branding/app.json or assets/themes/*.theme.json and save; the UI updates immediately.",
+      "configOk": "Configuration loaded: {0} themes, all schema-valid.",
+      "configProblems": "Configuration has {0} item(s) needing attention. First: {1}"
+    },
+    "about": {
+      "creditsTitle": "Built with",
+      "linksTitle": "Related links",
+      "noDiagnostics": "No configuration problems."
+    },
+    "placeholder": {
+      "message": "This tab is not implemented yet. Its target milestone is shown below:"
     },
     "explorer": {
       "empty": "No project open",
@@ -218,6 +230,14 @@
       "sourceManaged": "MetalForge managed directory",
       "sourcePath": "System PATH",
       "sourceKnownLocation": "Known install location",
+      "categoryBuild": "Build tools",
+      "categoryToolchain": "Compilers and toolchains",
+      "categoryEmulator": "Emulators",
+      "categoryDebugger": "Debuggers",
+      "categoryFlash": "Flashing tools",
+      "categoryLanguage": "Language services",
+      "categoryGeneral": "Other",
+      "missingSectionTitle": "Still missing these required tools",
       "explainTitle": "Why these tools are needed",
       "explainBody": "MetalForge does not bundle compilers, emulators or flashing tools, and never modifies the system PATH. It detects, verifies and invokes them, and explains how to obtain anything missing."
     },

@@ -7,6 +7,9 @@ using MetalForge.App.Services;
 using MetalForge.App.ViewModels;
 using MetalForge.App.Views;
 using MetalForge.Core.Configuration;
+using MetalForge.Core.Layout;
+using MetalForge.Core.Localization;
+using MetalForge.Core.Toolchains;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -14,8 +17,11 @@ namespace MetalForge.App;
 
 public partial class App : Application
 {
-    private IConfigurationService _configurationService = null!;
+    private IConfigurationService _configuration = null!;
+    private ILocalizationService _localization = null!;
+    private IToolLocator _toolLocator = null!;
     private ThemeResourceService _themeResources = null!;
+    private ShellViewModel _shell = null!;
     private ILogger<App> _logger = null!;
 
     public override void Initialize()
@@ -25,10 +31,12 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // 配置必须在创建任何窗口之前加载完毕：
-        // 视图通过 DynamicResource 引用主题，资源不存在时会静默回退，
-        // 因此"先有主题、后有窗口"是硬顺序。
-        _configurationService = Program.Services.GetRequiredService<IConfigurationService>();
+        // 顺序是硬要求：配置 → 主题资源 → 本地化 → 布局/内容工厂 → 窗口。
+        // 视图通过 DynamicResource 引用主题、通过服务查询文案，缺任何一步都会
+        // 表现为"界面渲染出来了但内容是空的或颜色不对"。
+        _configuration = Program.Services.GetRequiredService<IConfigurationService>();
+        _localization = Program.Services.GetRequiredService<ILocalizationService>();
+        _toolLocator = Program.Services.GetRequiredService<IToolLocator>();
         _themeResources = Program.Services.GetRequiredService<ThemeResourceService>();
         _logger = Program.Services.GetRequiredService<ILogger<App>>();
 
@@ -36,7 +44,10 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = CreateMainWindow();
+            _shell = Program.Services.GetRequiredService<ShellViewModel>();
+            _shell.Rebuild();
+
+            desktop.MainWindow = CreateMainWindow(_shell);
             desktop.Exit += OnDesktopExit;
         }
 
@@ -47,7 +58,7 @@ public partial class App : Application
     {
         try
         {
-            _configurationService.ReloadAsync(CancellationToken.None).GetAwaiter().GetResult();
+            _configuration.ReloadAsync(CancellationToken.None).GetAwaiter().GetResult();
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -55,7 +66,9 @@ public partial class App : Application
             ApplicationLog.ConfigurationLoadFailed(_logger, exception);
         }
 
-        var configuration = _configurationService.Current;
+        (Program.Services.GetRequiredService<LocalizationService>()).Reload();
+
+        var configuration = _configuration.Current;
         _themeResources.Apply(this, configuration.Theme);
 
         foreach (var diagnostic in configuration.Diagnostics)
@@ -63,9 +76,13 @@ public partial class App : Application
             LogDiagnostic(diagnostic);
         }
 
+        foreach (var diagnostic in Program.Services.GetRequiredService<LocalizationService>().Diagnostics)
+        {
+            LogDiagnostic(diagnostic);
+        }
+
         ApplicationLog.ApplicationStarted(_logger, configuration.Branding.Name, configuration.Branding.Version);
 
-        // CA1873：即使日志被禁用，实参也会被求值；这里显式守卫，避免无意义的环境字符串拼接。
         if (_logger.IsEnabled(LogLevel.Information))
         {
             var runtimeVersion = Environment.Version.ToString(3);
@@ -73,8 +90,8 @@ public partial class App : Application
             ApplicationLog.RuntimeEnvironment(_logger, runtimeVersion, operatingSystem);
         }
 
-        _configurationService.StartWatching();
-        _configurationService.ConfigurationChanged += OnConfigurationChanged;
+        _configuration.StartWatching();
+        _configuration.ConfigurationChanged += OnConfigurationChanged;
     }
 
     private void LogDiagnostic(Core.Diagnostics.Diagnostic diagnostic)
@@ -112,40 +129,52 @@ public partial class App : Application
                 configuration.AvailableThemes.Count,
                 configuration.Diagnostics.Count);
 
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } window })
-            {
-                window.Title = configuration.Branding.FormatWindowTitle();
-            }
+            // 布局与菜单都要按新配置重建（用户可能改了布局预设）。
+            _shell.Rebuild();
         });
     }
 
-    private MainWindow CreateMainWindow()
+    private MainWindow CreateMainWindow(ShellViewModel shell)
     {
-        var branding = _configurationService.Current.Branding;
-        var welcome = Program.Services.GetRequiredService<WelcomeViewModel>();
-        welcome.UpdateFrom(_configurationService.Current);
-
+        var branding = _configuration.Current.Branding;
         var window = new MainWindow
         {
-            Title = branding.FormatWindowTitle(),
+            DataContext = shell,
             MinWidth = branding.Window.MinimumWidth,
             MinHeight = branding.Window.MinimumHeight,
-            DataContext = welcome,
         };
 
         ApplyInitialSize(window, branding.Window);
+        window.Opened += (_, _) => ClampToScreen(window);
 
-        // 窗口完成首次布局后再钳制一次：只有此时 Width/Height 才是真实值。
-        // 单纯依赖创建前的估算，会在小屏幕上把面板和状态栏推到屏幕之外
-        // （本项目在 150% 缩放的 1280x720 屏幕上实测到了这个现象）。
-        window.Opened += (_, _) =>
-        {
-            LogWindowGeometry(window, "opened");
-            ClampToScreen(window);
-            LogWindowGeometry(window, "clamped");
-        };
+        // 启动后异步探测一次工具链：不阻塞首屏，也不在无工具时让界面显示"未知"。
+        _ = ProbeToolchainAsync(window);
 
         return window;
+    }
+
+    private async Task ProbeToolchainAsync(Window window)
+    {
+        try
+        {
+            var report = await _toolLocator.CheckHealthAsync(CancellationToken.None).ConfigureAwait(true);
+            _configuration.SetToolHealth(report);
+            _shell.Rebuild();
+
+            // CA1873：实参在日志禁用时也会求值，因此先算好再传。
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                var readiness = report.Readiness.ToString();
+                var toolCount = report.Tools.Count;
+                var missingCount = report.MissingRequiredTools().Count;
+                ApplicationLog.ToolchainProbed(_logger, readiness, toolCount, missingCount, report.Duration.TotalMilliseconds);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            // 探测失败不影响界面可用性：状态栏会显示"缺少工具链"，详情在健康面板里。
+            ApplicationLog.ToolchainProbeFailed(_logger, exception);
+        }
     }
 
     /// <summary>
@@ -339,7 +368,9 @@ public partial class App : Application
 
     private void OnDesktopExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
     {
-        _configurationService.ConfigurationChanged -= OnConfigurationChanged;
-        _configurationService.Dispose();
+        _configuration.ConfigurationChanged -= OnConfigurationChanged;
+        _configuration.Dispose();
+        _localization.Dispose();
+        _toolLocator.Dispose();
     }
 }

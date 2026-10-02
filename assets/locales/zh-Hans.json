@@ -90,7 +90,9 @@
       "groupBuild": "构建",
       "groupRun": "运行",
       "groupDebug": "调试",
-      "groupView": "视图"
+      "groupView": "视图",
+      "notImplemented": "该功能在后续里程碑实现",
+      "menuBar": "菜单栏"
     },
     "panel": {
       "explorer": "项目",
@@ -152,7 +154,17 @@
       "stepOpenProject": "打开已有项目：文件 → 打开项目…",
       "stepToolchain": "检查工具链是否齐全：工具 → 工具链健康检查",
       "stepDocs": "阅读设计与使用文档：帮助 → 文档",
-      "configHint": "提示：编辑 assets/branding/app.json 或 assets/themes/*.theme.json 后保存，界面会立即更新。"
+      "configHint": "提示：编辑 assets/branding/app.json 或 assets/themes/*.theme.json 后保存，界面会立即更新。",
+      "configOk": "配置已加载：{0} 套主题，全部通过 Schema 校验。",
+      "configProblems": "配置有 {0} 处需要注意，第一条：{1}"
+    },
+    "about": {
+      "creditsTitle": "技术致谢",
+      "linksTitle": "相关链接",
+      "noDiagnostics": "配置无异常。"
+    },
+    "placeholder": {
+      "message": "该标签页尚未实现。它的归属里程碑见下方标记："
     },
     "explorer": {
       "empty": "尚未打开项目",
@@ -218,6 +230,14 @@
       "sourceManaged": "MetalForge 托管目录",
       "sourcePath": "系统 PATH",
       "sourceKnownLocation": "常见安装位置",
+      "categoryBuild": "构建工具",
+      "categoryToolchain": "编译器与工具链",
+      "categoryEmulator": "模拟器",
+      "categoryDebugger": "调试器",
+      "categoryFlash": "烧录工具",
+      "categoryLanguage": "语言服务",
+      "categoryGeneral": "其他",
+      "missingSectionTitle": "还缺少这些必需工具",
       "explainTitle": "为什么需要这些工具",
       "explainBody": "MetalForge 不随附编译器、模拟器与烧录工具，也不修改系统 PATH。它只负责探测、校验与调用；缺失时给出获取指引。"
     },

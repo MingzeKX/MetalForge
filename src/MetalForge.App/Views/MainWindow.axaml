@@ -2,118 +2,102 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:MetalForge.App.ViewModels"
         x:Class="MetalForge.App.Views.MainWindow"
-        x:DataType="vm:WelcomeViewModel"
-        Title="MetalForge"
+        x:DataType="vm:ShellViewModel"
+        Title="{Binding WindowTitle}"
         Background="{DynamicResource MfBackground}"
-        FontSize="{DynamicResource MfFontSizeBase}"
-        Width="1440" Height="900">
+        Width="1280" Height="720">
   <!--
-    M1 目标是"配置驱动的可运行外壳"：菜单栏 + 工具栏 + 三栏骨架 + 状态栏。
-    面板内容（项目树、编辑器、输出）在后续里程碑填充。
+    经典 IDE 布局的容器部分：菜单栏（可选）、工具栏（可选）、中央面板树、状态栏（可选）。
+    中央那棵树由 LayoutControlBuilder 从 assets/layouts/*.layout.json 构建，
+    因此这里没有硬编码的栏位结构。
   -->
   <DockPanel LastChildFill="True">
 
-    <!-- 状态栏（底部，先声明先停靠） -->
+    <!-- 状态栏 -->
     <Border DockPanel.Dock="Bottom"
-            Height="{DynamicResource MfStatusBarHeight}"
-            Background="{DynamicResource MfSurface}"
-            BorderBrush="{DynamicResource MfBorder}"
-            BorderThickness="0,1,0,0">
-      <Grid ColumnDefinitions="Auto,*,Auto" Margin="8,0">
-        <TextBlock Grid.Column="0"
-                   x:Name="statusBarEnvironment"
-                   VerticalAlignment="Center"
-                   FontSize="{DynamicResource MfFontSizeSmall}"
-                   Foreground="{DynamicResource MfForegroundMuted}"
-                   Text="{Binding EnvironmentSummary}" />
-        <TextBlock Grid.Column="2"
-                   x:Name="statusBarVersion"
-                   VerticalAlignment="Center"
-                   FontSize="{DynamicResource MfFontSizeSmall}"
-                   Foreground="{DynamicResource MfForegroundMuted}"
-                   Text="{Binding VersionText}" />
+            Classes="app-statusbar"
+            IsVisible="{Binding ShowStatusBar}"
+            Height="{DynamicResource MfStatusBarHeight}">
+      <Grid ColumnDefinitions="Auto,*" Margin="8,0">
+        <ItemsControl Grid.Column="0" ItemsSource="{Binding StatusItems}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="12" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:CommandItemViewModel">
+              <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                <TextBlock Classes="status-label" Text="{Binding Label}" />
+                <TextBlock Classes="status-value" Text="{Binding Description}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Grid.Column="1"
+                   Classes="status-label"
+                   HorizontalAlignment="Right"
+                   Text="{Binding StatusText}" />
       </Grid>
     </Border>
 
+    <!-- 菜单栏 -->
+    <Menu DockPanel.Dock="Top"
+          Classes="app-menu"
+          IsVisible="{Binding ShowMenuBar}"
+          ItemsSource="{Binding MenuItems}">
+      <Menu.ItemTemplate>
+        <DataTemplate DataType="vm:CommandItemViewModel">
+          <MenuItem Header="{Binding Label}"
+                    ItemsSource="{Binding Children}"
+                    IsEnabled="{Binding IsEnabled}"
+                    ToolTip.Tip="{Binding DisabledReason}">
+            <MenuItem.ItemTemplate>
+              <DataTemplate DataType="vm:CommandItemViewModel">
+                <MenuItem Header="{Binding Label}"
+                          IsEnabled="{Binding IsEnabled}"
+                          InputGesture="{Binding Gesture}"
+                          ToolTip.Tip="{Binding DisabledReason}"
+                          Command="{Binding $parent[Window].((vm:ShellViewModel)DataContext).InvokeCommand}"
+                          CommandParameter="{Binding}" />
+              </DataTemplate>
+            </MenuItem.ItemTemplate>
+          </MenuItem>
+        </DataTemplate>
+      </Menu.ItemTemplate>
+    </Menu>
+
     <!-- 工具栏 -->
-    <Border DockPanel.Dock="Top"
-            Height="{DynamicResource MfToolbarHeight}"
-            Background="{DynamicResource MfSurface}"
-            BorderBrush="{DynamicResource MfBorder}"
-            BorderThickness="0,0,0,1">
-      <StackPanel Orientation="Horizontal"
-                  VerticalAlignment="Center"
-                  Spacing="8"
-                  Margin="8,0">
-        <TextBlock x:Name="toolbarBrand"
-                   VerticalAlignment="Center"
-                   FontWeight="SemiBold"
-                   Foreground="{DynamicResource MfForeground}"
-                   Text="{Binding Headline}" />
-        <TextBlock VerticalAlignment="Center"
-                   Foreground="{DynamicResource MfForegroundMuted}"
-                   Text="·" />
-        <TextBlock x:Name="toolbarStage"
-                   VerticalAlignment="Center"
-                   Foreground="{DynamicResource MfForegroundMuted}"
-                   Text="M0 骨架：配置系统已就绪，构建/运行/调试面板将在 M2–M3 接入" />
-      </StackPanel>
+    <Border DockPanel.Dock="Top" Classes="app-toolbar" IsVisible="{Binding ShowToolbar}">
+      <ItemsControl ItemsSource="{Binding ToolbarItems}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="4" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:CommandItemViewModel">
+            <StackPanel>
+              <Rectangle x:Name="separator"
+                         Width="1"
+                         Height="{DynamicResource MfToolbarHeight}"
+                         Fill="{DynamicResource MfBorder}"
+                         IsVisible="{Binding IsSeparator}" />
+              <Button x:Name="commandButton"
+                      Content="{Binding Label}"
+                      IsVisible="{Binding !IsSeparator}"
+                      IsEnabled="{Binding IsEnabled}"
+                      ToolTip.Tip="{Binding DisabledReason}"
+                      Command="{Binding $parent[Window].((vm:ShellViewModel)DataContext).InvokeCommand}"
+                      CommandParameter="{Binding}" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
     </Border>
 
-    <!-- 三栏骨架 -->
-    <Grid ColumnDefinitions="260,4,*,4,300" Margin="8">
-      <Border Grid.Column="0"
-              Background="{DynamicResource MfSurface}"
-              CornerRadius="{DynamicResource MfCornerRadius}"
-              Padding="{DynamicResource MfPanelPadding}">
-        <TextBlock Foreground="{DynamicResource MfForegroundMuted}" Text="项目浏览器（M1）" />
-      </Border>
-
-      <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns" />
-
-      <Border Grid.Column="2"
-              Margin="8,0"
-              Background="{DynamicResource MfSurface}"
-              CornerRadius="{DynamicResource MfCornerRadius}"
-              Padding="{DynamicResource MfSpace4}">
-        <StackPanel Spacing="8" VerticalAlignment="Top">
-          <TextBlock x:Name="welcomeHeadline"
-                     FontSize="{DynamicResource MfFontSizeHeading}"
-                     FontWeight="SemiBold"
-                     Foreground="{DynamicResource MfForeground}"
-                     Text="{Binding Headline}" />
-          <TextBlock x:Name="welcomeTagline"
-                     Foreground="{DynamicResource MfAccent}"
-                     Text="{Binding Tagline}" />
-          <TextBlock x:Name="welcomeDescription"
-                     TextWrapping="Wrap"
-                     MaxWidth="620"
-                     HorizontalAlignment="Left"
-                     Foreground="{DynamicResource MfForegroundMuted}"
-                     Text="{Binding Description}" />
-          <TextBlock x:Name="welcomeConfiguration"
-                     Margin="0,8,0,0"
-                     TextWrapping="Wrap"
-                     MaxWidth="620"
-                     HorizontalAlignment="Left"
-                     Foreground="{DynamicResource MfSuccess}"
-                     Text="{Binding ConfigurationSummary}" />
-          <TextBlock TextWrapping="Wrap"
-                     MaxWidth="620"
-                     HorizontalAlignment="Left"
-                     Foreground="{DynamicResource MfForegroundMuted}"
-                     Text="提示：编辑 assets/branding/app.json 或 assets/themes/*.theme.json 后保存，界面会立即更新（配置热重载）。" />
-        </StackPanel>
-      </Border>
-
-      <GridSplitter Grid.Column="3" Background="Transparent" ResizeDirection="Columns" />
-
-      <Border Grid.Column="4"
-              Background="{DynamicResource MfSurface}"
-              CornerRadius="{DynamicResource MfCornerRadius}"
-              Padding="{DynamicResource MfPanelPadding}">
-        <TextBlock Foreground="{DynamicResource MfForegroundMuted}" Text="属性面板（M1）" />
-      </Border>
-    </Grid>
+    <!-- 文档区 + 面板树（内容来自布局配置） -->
+    <ContentControl x:Name="layoutHost" Content="{Binding LayoutRoot}" Margin="6" />
   </DockPanel>
 </Window>

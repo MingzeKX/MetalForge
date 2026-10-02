@@ -41,6 +41,18 @@ internal static partial class ApplicationLog
     public static partial void WindowClampedToScreen(ILogger logger, double width, double height, int availableWidth, int availableHeight);
 
     [LoggerMessage(
+        EventId = 1300,
+        Level = LogLevel.Information,
+        Message = "工具链探测完成：{Readiness}，共 {ToolCount} 项，缺失必需 {MissingCount} 项，耗时 {ElapsedMilliseconds:F0} ms。")]
+    public static partial void ToolchainProbed(ILogger logger, string readiness, int toolCount, int missingCount, double elapsedMilliseconds);
+
+    [LoggerMessage(EventId = 1301, Level = LogLevel.Warning, Message = "工具链探测失败，界面将显示为未检测到工具链。")]
+    public static partial void ToolchainProbeFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1302, Level = LogLevel.Error, Message = "工具清单为空：assets/targets/tools.json 无法读取或没有有效条目，工具链健康检查将无内容可显示。")]
+    public static partial void ToolchainCatalogEmpty(ILogger logger);
+
+    [LoggerMessage(
         EventId = 1202,
         Level = LogLevel.Information,
         Message = "窗口几何[{Stage}]：bounds {BoundsWidth}x{BoundsHeight}，work {WorkX},{WorkY} {WorkWidth}x{WorkHeight}，screenScaling {ScreenScaling}，renderScaling {RenderScaling}，window {WindowWidth}x{WindowHeight} @ {WindowX},{WindowY}")]

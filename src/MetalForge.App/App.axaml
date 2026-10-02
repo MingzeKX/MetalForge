@@ -9,5 +9,6 @@
   -->
   <Application.Styles>
     <FluentTheme />
+    <StyleInclude Source="avares://MetalForge/Styles.axaml" />
   </Application.Styles>
 </Application>

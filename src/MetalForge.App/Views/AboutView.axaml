@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             xmlns:cfg="using:MetalForge.Core.Configuration"
+             x:Class="MetalForge.App.Views.AboutView"
+             x:DataType="vm:AboutViewModel">
+  <ScrollViewer>
+    <StackPanel Spacing="10" MaxWidth="720" HorizontalAlignment="Left" Margin="4">
+      <TextBlock Classes="heading" Text="{Binding Headline}" />
+      <TextBlock Classes="subheading" Text="{Binding Subheadline}" />
+      <TextBlock Classes="body" Text="{Binding Description}" />
+
+      <Border Classes="card">
+        <StackPanel Spacing="4">
+          <TextBlock Classes="status-value" Text="{Binding VersionText}" />
+          <TextBlock Classes="body" Text="{Binding RuntimeText}" />
+          <TextBlock Classes="body" Text="{Binding PlatformText}" />
+          <TextBlock Classes="body" Text="{Binding Copyright}" />
+          <TextBlock Classes="body" Text="{Binding DiagnosticSummaryText}" />
+        </StackPanel>
+      </Border>
+
+      <StackPanel Spacing="4">
+        <TextBlock Classes="subheading" Text="{Binding CreditsTitle}" />
+        <ItemsControl ItemsSource="{Binding Credits}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="cfg:AboutCredit">
+              <Grid ColumnDefinitions="200,*" Margin="0,0,0,4">
+                <TextBlock Grid.Column="0" Classes="status-label" Text="{Binding Label}" />
+                <TextBlock Grid.Column="1" Classes="status-value" Text="{Binding Value}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <ItemsControl ItemsSource="{Binding Sections}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="cfg:AboutSection">
+            <StackPanel Spacing="4" Margin="0,8,0,0">
+              <TextBlock Classes="subheading" Text="{Binding Title}" />
+              <TextBlock Classes="body" Text="{Binding Body}" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <StackPanel Spacing="4" Margin="0,8,0,0">
+        <TextBlock Classes="subheading" Text="{Binding LinksTitle}" />
+        <ItemsControl ItemsSource="{Binding Links}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="cfg:BrandingLink">
+              <Grid ColumnDefinitions="200,*" Margin="0,0,0,4">
+                <TextBlock Grid.Column="0" Classes="status-label" Text="{Binding Label}" />
+                <TextBlock Grid.Column="1" Classes="body" Text="{Binding Uri}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

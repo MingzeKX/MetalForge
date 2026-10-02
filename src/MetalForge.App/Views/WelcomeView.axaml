@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             x:Class="MetalForge.App.Views.WelcomeView"
+             x:DataType="vm:WelcomeViewModel">
+  <ScrollViewer>
+    <StackPanel Spacing="10" MaxWidth="720" HorizontalAlignment="Left" Margin="4">
+      <TextBlock Classes="heading" Text="{Binding Headline}" />
+      <TextBlock Classes="subheading" Text="{Binding Tagline}" />
+      <TextBlock Classes="body" Text="{Binding Description}" />
+
+      <TextBlock Classes="body" Text="{Binding ConfigurationSummary}" />
+
+      <StackPanel Spacing="4" Margin="0,8,0,0">
+        <TextBlock Classes="subheading" Text="{Binding NextStepsTitle}" />
+        <ItemsControl ItemsSource="{Binding NextSteps}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="x:String">
+              <TextBlock Classes="body" Text="{Binding}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+
+      <TextBlock Classes="body" Text="{Binding ConfigHint}" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

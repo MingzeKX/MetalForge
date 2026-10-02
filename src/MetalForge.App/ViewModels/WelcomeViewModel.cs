@@ -1,15 +1,17 @@
-using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MetalForge.Core.Configuration;
+using MetalForge.Core.Localization;
 
 namespace MetalForge.App.ViewModels;
 
 /// <summary>
-/// 欢迎页 ViewModel。显示品牌信息与配置健康状态，
-/// 让用户（尤其是初学者）第一眼就知道"环境是否就绪、缺什么"。
+/// 欢迎页 ViewModel。显示品牌信息、接下来能做什么、以及配置健康状态，
+/// 让用户（尤其是初学者）第一眼就知道"环境是否就绪、缺什么、下一步点哪"。
 /// </summary>
 public sealed partial class WelcomeViewModel : ObservableObject
 {
+    private readonly ILocalizationService _localization;
+
     [ObservableProperty]
     private string _headline = "MetalForge";
 
@@ -29,7 +31,22 @@ public sealed partial class WelcomeViewModel : ObservableObject
     private string _configurationSummary = string.Empty;
 
     [ObservableProperty]
+    private string _nextStepsTitle = string.Empty;
+
+    [ObservableProperty]
+    private string _configHint = string.Empty;
+
+    [ObservableProperty]
+    private IReadOnlyList<string> _nextSteps = [];
+
+    [ObservableProperty]
     private bool _hasConfigurationProblems;
+
+    public WelcomeViewModel(ILocalizationService localization)
+    {
+        ArgumentNullException.ThrowIfNull(localization);
+        _localization = localization;
+    }
 
     /// <summary>用当前配置刷新全部显示字段。</summary>
     public void UpdateFrom(MetalForgeConfiguration configuration)
@@ -40,8 +57,19 @@ public sealed partial class WelcomeViewModel : ObservableObject
         Headline = branding.Name;
         Tagline = branding.Tagline ?? string.Empty;
         Description = branding.Description ?? string.Empty;
-        VersionText = $"版本 {branding.Version}";
+        VersionText = $"{_localization["settings.title"]}: {branding.Version}";
         EnvironmentSummary = $"{RuntimeDescription()} · {PlatformDescription()}";
+
+        NextStepsTitle = _localization["welcome.nextSteps"];
+        NextSteps =
+        [
+            _localization["welcome.stepNewProject"],
+            _localization["welcome.stepOpenProject"],
+            _localization["welcome.stepToolchain"],
+            _localization["welcome.stepDocs"],
+        ];
+
+        ConfigHint = _localization["welcome.configHint"];
 
         var problems = configuration.Diagnostics
             .Where(diagnostic => diagnostic.Severity >= Core.Diagnostics.DiagnosticSeverity.Warning)
@@ -49,8 +77,8 @@ public sealed partial class WelcomeViewModel : ObservableObject
 
         HasConfigurationProblems = problems.Length > 0;
         ConfigurationSummary = problems.Length == 0
-            ? $"配置已加载：{configuration.AvailableThemes.Count} 套主题，全部通过 Schema 校验。"
-            : $"配置有 {problems.Length} 处需要注意：{problems[0].Message}";
+            ? _localization.Format("welcome.configOk", configuration.AvailableThemes.Count)
+            : _localization.Format("welcome.configProblems", problems.Length, problems[0].Message);
     }
 
     private static string RuntimeDescription()

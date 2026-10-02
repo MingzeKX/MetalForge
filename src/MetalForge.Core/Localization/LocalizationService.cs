@@ -4,7 +4,7 @@ using MetalForge.Core.Diagnostics;
 namespace MetalForge.Core.Localization;
 
 /// <summary>本地化服务的查询接口。</summary>
-public interface ILocalizationService
+public interface ILocalizationService : IDisposable
 {
     /// <summary>当前生效的语言代码。</summary>
     string CurrentLanguage { get; }

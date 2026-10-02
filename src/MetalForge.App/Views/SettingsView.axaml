@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             xmlns:theming="using:MetalForge.Core.Theming"
+             x:Class="MetalForge.App.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+  <ScrollViewer>
+    <StackPanel Spacing="12" MaxWidth="720" HorizontalAlignment="Left" Margin="4">
+      <TextBlock Classes="heading" Text="{Binding Title}" />
+
+      <Border Classes="card">
+        <StackPanel Spacing="10">
+          <TextBlock Classes="subheading" Text="{Binding AppearanceTitle}" />
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="status-label" Text="{Binding ThemeLabel}" />
+            <ComboBox x:Name="themeSelector"
+                      ItemsSource="{Binding Themes}"
+                      SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                      MinWidth="260">
+              <ComboBox.ItemTemplate>
+                <DataTemplate DataType="theming:ThemeDefinition">
+                  <TextBlock Text="{Binding DisplayName}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="status-label" Text="{Binding LanguageLabel}" />
+            <ComboBox x:Name="languageSelector"
+                      ItemsSource="{Binding Languages}"
+                      SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+                      MinWidth="260">
+              <ComboBox.ItemTemplate>
+                <DataTemplate DataType="vm:SettingsViewModel+LanguageOption">
+                  <TextBlock Text="{Binding DisplayName}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="status-label" Text="{Binding DensityLabel}" />
+            <TextBlock Classes="status-value" Text="{Binding DensityValue}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

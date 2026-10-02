@@ -1,0 +1,142 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    全局样式。设计约束：这里不出现任何颜色或尺寸字面量 ——
+    全部通过 DynamicResource 引用主题资源键（Mf*），
+    由 ThemeResourceService 从 assets/themes/*.theme.json 翻译而来。
+    NoHardCodedVisualsTests 会扫描本文件，出现 #RRGGBB 或 Colors.X 即测试失败。
+  -->
+
+  <Style Selector="Window">
+    <Setter Property="Background" Value="{DynamicResource MfBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeBase}" />
+  </Style>
+
+  <!-- 面板外框：靠背景明度与圆角分层，不用分割线 -->
+  <Style Selector="Border.panel-chrome">
+    <Setter Property="Background" Value="{DynamicResource MfSurface}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadius}" />
+    <Setter Property="Padding" Value="{DynamicResource MfSpace1}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- 面板内的标签控件：去掉 TabControl 自带边框，只保留标签条 -->
+  <Style Selector="TabControl.tool-panel">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="TabControl.tool-panel > TabItem">
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+    <Setter Property="Padding" Value="{DynamicResource MfSpace2}" />
+    <Setter Property="MinHeight" Value="{DynamicResource MfTabHeight}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+  </Style>
+
+  <Style Selector="TabControl.tool-panel > TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+  </Style>
+
+  <!-- 文档区：标签条更高、更醒目，因为它是主要工作区 -->
+  <Style Selector="TabControl.document-area">
+    <Setter Property="Background" Value="{DynamicResource MfSurface}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="TabControl.document-area > TabItem">
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeBase}" />
+    <Setter Property="Padding" Value="{DynamicResource MfSpace2}" />
+    <Setter Property="MinHeight" Value="{DynamicResource MfTabHeight}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+  </Style>
+
+  <Style Selector="TabControl.document-area > TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+  </Style>
+
+  <!-- 占位内容：颜色使用 muted 而不是错误色 —— 未实现不是错误 -->
+  <Style Selector="TextBlock.panel-placeholder">
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+  </Style>
+
+  <!-- 顶部菜单栏 -->
+  <Style Selector="Menu.app-menu">
+    <Setter Property="Background" Value="{DynamicResource MfSurface}" />
+    <Setter Property="Padding" Value="{DynamicResource MfSpace1}" />
+  </Style>
+
+  <!-- 工具栏 -->
+  <Style Selector="Border.app-toolbar">
+    <Setter Property="Background" Value="{DynamicResource MfSurface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource MfBorder}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="{DynamicResource MfSpace1}" />
+  </Style>
+
+  <!-- 状态栏 -->
+  <Style Selector="Border.app-statusbar">
+    <Setter Property="Background" Value="{DynamicResource MfSurface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource MfBorder}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.status-label">
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.status-value">
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- 通用文本层级 -->
+  <Style Selector="TextBlock.heading">
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeHeading}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+  </Style>
+
+  <Style Selector="TextBlock.subheading">
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeBase}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfAccent}" />
+  </Style>
+
+  <Style Selector="TextBlock.body">
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+  </Style>
+
+  <!-- 语义状态文本 -->
+  <Style Selector="TextBlock.status-ok">
+    <Setter Property="Foreground" Value="{DynamicResource MfSuccess}" />
+  </Style>
+
+  <Style Selector="TextBlock.status-warn">
+    <Setter Property="Foreground" Value="{DynamicResource MfWarning}" />
+  </Style>
+
+  <Style Selector="TextBlock.status-danger">
+    <Setter Property="Foreground" Value="{DynamicResource MfDanger}" />
+  </Style>
+
+  <Style Selector="TextBlock.mono">
+    <Setter Property="FontFamily" Value="{DynamicResource MfEditorFontFamily}" />
+  </Style>
+
+  <!-- 卡片：用于工具链健康检查等列表 -->
+  <Style Selector="Border.card">
+    <Setter Property="Background" Value="{DynamicResource MfSurfaceRaised}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadiusSmall}" />
+    <Setter Property="Padding" Value="{DynamicResource MfSpace3}" />
+  </Style>
+
+  <Style Selector="GridSplitter.layout-splitter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+</Styles>

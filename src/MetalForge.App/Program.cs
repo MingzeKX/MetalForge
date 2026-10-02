@@ -1,9 +1,13 @@
 using Avalonia;
+using Avalonia.Controls;
 using MetalForge.App.Services;
 using MetalForge.App.ViewModels;
-using MetalForge.App.Views;
 using MetalForge.Core;
 using MetalForge.Core.Configuration;
+using MetalForge.Core.Layout;
+using MetalForge.Core.Localization;
+using MetalForge.Core.Processes;
+using MetalForge.Core.Toolchains;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -24,8 +28,6 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // 命令行解析（--portable / --assets <dir> / --profile-startup）在 M1 落地，
-        // 当前先保证最小可用路径：构建服务容器 -> 启动 UI。
         Services = BuildServices(args);
 
         try
@@ -59,18 +61,101 @@ internal static class Program
         });
 
         var portable = args.Contains("--portable", StringComparer.OrdinalIgnoreCase);
-        services.AddSingleton(MetalForgeCoreServices.CreateDefaultAssetOptions(portable));
-        services.AddSingleton<AssetResolver>(provider =>
-            new AssetResolver(provider.GetRequiredService<AssetOptions>()));
+        var assetOptions = MetalForgeCoreServices.CreateDefaultAssetOptions(portable);
+
+        services.AddSingleton(assetOptions);
+        services.AddSingleton(provider => new AssetResolver(provider.GetRequiredService<AssetOptions>()));
+
+        // 配置与本地化：两者都从 assets/ 读取，且都需要把诊断暴露给界面。
         services.AddSingleton<ConfigurationService>();
         services.AddSingleton<IConfigurationService>(provider => provider.GetRequiredService<ConfigurationService>());
+        services.AddSingleton<LocalizationService>();
+        services.AddSingleton<ILocalizationService>(provider => provider.GetRequiredService<LocalizationService>());
+
         services.AddSingleton<ThemeResourceService>();
+
+        // 进程执行与工具链探测。
+        services.AddSingleton<IProcessRunner>(_ => new ProcessRunner());
+        services.AddSingleton<IToolLocator>(provider => CreateToolLocator(provider, assetOptions));
+
+        // 界面：ViewModels 与标签页工厂。
         services.AddSingleton<WelcomeViewModel>();
+        services.AddSingleton<AboutViewModel>();
+        services.AddSingleton<SettingsViewModel>();
+
+        services.AddSingleton<ToolchainHealthViewModel>(provider => new ToolchainHealthViewModel(
+            provider.GetRequiredService<IToolLocator>(),
+            key => provider.GetRequiredService<ILocalizationService>()[key],
+            (key, arguments) => provider.GetRequiredService<ILocalizationService>().Format(key, arguments)));
+
+        services.AddSingleton<TabContentFactory>(provider => new TabContentFactory(
+            key => provider.GetRequiredService<ILocalizationService>()[key],
+            provider.GetRequiredService<WelcomeViewModel>,
+            provider.GetRequiredService<ToolchainHealthViewModel>,
+            provider.GetRequiredService<AboutViewModel>,
+            provider.GetRequiredService<SettingsViewModel>));
+
+        services.AddSingleton(provider =>
+        {
+            var factory = provider.GetRequiredService<TabContentFactory>();
+            var builder = new LayoutControlBuilder(factory);
+            return (Func<LayoutPreset, Control>)(preset => builder.Build(preset.Root));
+        });
+
+        services.AddSingleton<ShellViewModel>(provider => new ShellViewModel(
+            provider.GetRequiredService<IConfigurationService>(),
+            provider.GetRequiredService<ILocalizationService>(),
+            provider.GetRequiredService<Func<LayoutPreset, Control>>()));
 
         return services.BuildServiceProvider(new ServiceProviderOptions
         {
             ValidateOnBuild = true,
             ValidateScopes = true,
         });
+    }
+
+    /// <summary>
+    /// 构造工具链探测器：读取 assets/targets/tools.json，并让探测结果可被界面订阅。
+    /// 探测本身不在启动路径上同步执行（见 App.ProbeToolchainAsync）。
+    /// </summary>
+    private static ToolLocator CreateToolLocator(IServiceProvider provider, AssetOptions assetOptions)
+    {
+        var resolver = provider.GetRequiredService<AssetResolver>();
+        var (configuration, diagnostics) = resolver.ResolveValidated("targets/tools.json", "targets/schema/tools.schema.json");
+        var logger = provider.GetRequiredService<ILogger<ToolLocator>>();
+
+        foreach (var diagnostic in diagnostics)
+        {
+            if (diagnostic.Severity >= Core.Diagnostics.DiagnosticSeverity.Warning)
+            {
+                ApplicationLog.ConfigurationWarning(logger, diagnostic.Severity, diagnostic.Code, diagnostic.Message);
+            }
+        }
+
+        var requirements = configuration.Root is null
+            ? []
+            : ToolchainCatalog.ReadRequirements(configuration.Root);
+
+        if (requirements.Count == 0)
+        {
+            ApplicationLog.ToolchainCatalogEmpty(logger);
+        }
+
+        var searchOptions = new ToolSearchOptions
+        {
+            UserDirectory = assetOptions.UserDirectory,
+            ManagedToolsDirectory = Path.Combine(
+                Path.GetDirectoryName(assetOptions.UserDirectory) ?? assetOptions.UserDirectory,
+                "tools"),
+            SearchSystemPath = true,
+            SearchKnownLocations = true,
+            ProbeVersions = true,
+        };
+
+        return new ToolLocator(
+            requirements,
+            provider.GetRequiredService<IProcessRunner>(),
+            searchOptions,
+            diagnostic => ApplicationLog.ConfigurationWarning(logger, diagnostic.Severity, diagnostic.Code, diagnostic.Message));
     }
 }

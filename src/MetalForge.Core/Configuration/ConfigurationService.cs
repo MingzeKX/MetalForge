@@ -215,6 +215,17 @@ public sealed record MetalForgeConfiguration
     public required UpdateOptions Update { get; init; }
     public required ThemeDefinition Theme { get; init; }
     public required IReadOnlyList<ThemeDefinition> AvailableThemes { get; init; }
+
+    /// <summary>可用布局预设（来自 <c>assets/layouts/*.layout.json</c>）。</summary>
+    public IReadOnlyList<Layout.LayoutPreset> AvailableLayouts { get; init; } = [];
+
+    /// <summary>
+    /// 最近一次工具链探测结果。
+    /// 探测是异步且可能较慢的（要启动外部进程），因此不在这里同步执行；
+    /// 启动后由宿主设置，界面据此显示状态栏摘要。
+    /// </summary>
+    public Toolchains.ToolHealthReport? ToolHealth { get; init; }
+
     public required IReadOnlyList<Diagnostic> Diagnostics { get; init; }
 
     /// <summary>是否有任何一层配置解析失败（已降级）。</summary>
@@ -231,6 +242,7 @@ public sealed record MetalForgeConfiguration
         Update = new UpdateOptions(),
         Theme = new ThemeDefinition(),
         AvailableThemes = [new ThemeDefinition()],
+        AvailableLayouts = [],
         Diagnostics = [],
     };
 }
@@ -244,6 +256,15 @@ public interface IConfigurationService : IDisposable
     /// <summary>当前主题（等价于 <c>Current.Theme</c>，便于绑定）。</summary>
     ThemeDefinition CurrentTheme { get; }
 
+    /// <summary>可用主题（来自 <c>assets/themes/*.theme.json</c>）。</summary>
+    IReadOnlyList<ThemeDefinition> AvailableThemes { get; }
+
+    /// <summary>可用布局预设（来自 <c>assets/layouts/*.layout.json</c>）。</summary>
+    IReadOnlyList<Layout.LayoutPreset> AvailableLayouts { get; }
+
+    /// <summary>最近一次工具链探测结果；尚未探测时为 null。</summary>
+    Toolchains.ToolHealthReport? ToolHealth { get; }
+
     /// <summary>配置被重新加载后触发（热重载或手动刷新）。</summary>
     event EventHandler<MetalForgeConfiguration>? ConfigurationChanged;
 
@@ -255,6 +276,12 @@ public interface IConfigurationService : IDisposable
 
     /// <summary>切换主题；<paramref name="themeId"/> 不存在时保留当前主题并返回 false。</summary>
     bool TryApplyTheme(string themeId);
+
+    /// <summary>
+    /// 记录一次工具链探测结果（由宿主在探测完成后调用）。
+    /// 探测本身不在配置服务里做：它需要启动外部进程，属于另一条职责。
+    /// </summary>
+    void SetToolHealth(Toolchains.ToolHealthReport report);
 
     /// <summary>把某个内置资源的路径解析为绝对路径，并在用户/项目层存在覆盖时优先返回覆盖文件。</summary>
     string? ResolveAssetPath(string relativePath);
@@ -296,6 +323,12 @@ public sealed class ConfigurationService : IConfigurationService
     public MetalForgeConfiguration Current { get; private set; }
 
     public ThemeDefinition CurrentTheme => Current.Theme;
+
+    public IReadOnlyList<ThemeDefinition> AvailableThemes => Current.AvailableThemes;
+
+    public IReadOnlyList<Layout.LayoutPreset> AvailableLayouts => Current.AvailableLayouts;
+
+    public Toolchains.ToolHealthReport? ToolHealth => Current.ToolHealth;
 
     public event EventHandler<MetalForgeConfiguration>? ConfigurationChanged;
 
@@ -366,6 +399,16 @@ public sealed class ConfigurationService : IConfigurationService
         return true;
     }
 
+    public void SetToolHealth(Toolchains.ToolHealthReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+
+        // 探测结果不属于"配置"，因此不参与热重载；重新加载配置时保留它。
+        var updated = Current with { ToolHealth = report };
+        Current = updated;
+        ConfigurationChanged?.Invoke(this, updated);
+    }
+
     public string? ResolveAssetPath(string relativePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
@@ -432,6 +475,8 @@ public sealed class ConfigurationService : IConfigurationService
                     ?? (themes.Count > 0 ? themes[0] : null)
                     ?? new ThemeDefinition();
 
+        var layouts = LoadLayouts(diagnostics);
+
         return new MetalForgeConfiguration
         {
             Branding = branding,
@@ -442,8 +487,34 @@ public sealed class ConfigurationService : IConfigurationService
             Update = update,
             Theme = theme,
             AvailableThemes = themes,
+            AvailableLayouts = layouts,
+            // 工具链探测与配置文件无关，重载时保留上一次结果。
+            ToolHealth = Current.ToolHealth,
             Diagnostics = diagnostics,
         };
+    }
+
+    private IReadOnlyList<Layout.LayoutPreset> LoadLayouts(List<Diagnostic> diagnostics)
+    {
+        var loader = new Layout.LayoutLoader(_resolver);
+        var (presets, layoutDiagnostics) = loader.LoadAll();
+        diagnostics.AddRange(layoutDiagnostics);
+
+        // 布局引用的标签页必须已登记；未登记的只会让某个面板变空，
+        // 因此在这里就报出来（Core 侧还有 TabCatalogTests 兜底）。
+        foreach (var preset in presets)
+        {
+            foreach (var tabId in Layout.TabCatalog.FindUnregisteredTabs(preset))
+            {
+                diagnostics.Add(new Diagnostic(
+                    DiagnosticSeverity.Warning,
+                    "MFLAYOUT005",
+                    $"布局 '{preset.Id}' 引用了未登记的标签页 '{tabId}'，该面板将显示为占位内容。",
+                    Hint: "检查 id 拼写，或在 TabCatalog 中登记该标签页。"));
+            }
+        }
+
+        return presets;
     }
 
     private T? LoadModel<T>(string relativePath, string? schemaRelativePath, List<Diagnostic> diagnostics)

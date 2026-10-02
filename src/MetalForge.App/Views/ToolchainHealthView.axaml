@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             x:Class="MetalForge.App.Views.ToolchainHealthView"
+             x:DataType="vm:ToolchainHealthViewModel">
+  <ScrollViewer>
+    <StackPanel Spacing="12" Margin="4">
+      <TextBlock Classes="heading" Text="{Binding Headline}" />
+      <TextBlock Classes="body" Text="{Binding Summary}" />
+      <TextBlock Classes="body" Text="{Binding LastCheckedText}" />
+
+      <Border Classes="card" IsVisible="{Binding HasMissingTools}">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="status-warn" FontWeight="SemiBold"
+                     Text="{Binding MissingSectionTitle}" />
+          <ItemsControl ItemsSource="{Binding MissingTools}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:ToolRowViewModel">
+                <StackPanel Spacing="2" Margin="0,0,0,8">
+                  <TextBlock Classes="status-value" FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                  <TextBlock Classes="body" Text="{Binding DetailText}" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <ItemsControl ItemsSource="{Binding Groups}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:ToolGroupViewModel">
+            <StackPanel Spacing="8" Margin="0,0,0,16">
+              <TextBlock Classes="subheading" Text="{Binding CategoryTitle}" />
+              <ItemsControl ItemsSource="{Binding Tools}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="vm:ToolRowViewModel">
+                    <Border Classes="card" Margin="0,0,0,6">
+                      <Grid ColumnDefinitions="200,90,90,*">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                          <TextBlock Classes="status-value" FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                          <TextBlock Classes="body" FontSize="{DynamicResource MfFontSizeSmall}" Text="{Binding ToolId}" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="1" Classes="status-value" Text="{Binding StatusText}" />
+                        <TextBlock Grid.Column="2" Classes="mono" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MfForegroundMuted}" Text="{Binding VersionText}" />
+
+                        <StackPanel Grid.Column="3" Spacing="2">
+                          <TextBlock Classes="body" Text="{Binding OriginText}" />
+                          <TextBlock Classes="body" Text="{Binding Purpose}" />
+                          <TextBlock Classes="body" Text="{Binding DetailText}" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Classes="body" IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}"
+                 Text="{Binding ErrorMessage}" />
+
+      <StackPanel Spacing="4">
+        <TextBlock Classes="subheading" Text="{Binding ExplainTitle}" />
+        <TextBlock Classes="body" Text="{Binding ExplainBody}" />
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
