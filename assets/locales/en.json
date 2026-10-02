@@ -1,0 +1,246 @@
+{
+  "$schema": "./schema/locale.schema.json",
+  "language": "en",
+  "displayName": "English",
+  "rightToLeft": false,
+  "strings": {
+    "app": {
+      "name": "MetalForge",
+      "loading": "Loading configuration…",
+      "ready": "Ready",
+      "busy": "Working…"
+    },
+    "menu": {
+      "file": {
+        "title": "File",
+        "items": {
+          "newProject": "New Project…",
+          "openProject": "Open Project…",
+          "closeProject": "Close Project",
+          "recent": "Recent",
+          "save": "Save",
+          "saveAll": "Save All",
+          "exit": "Exit"
+        }
+      },
+      "edit": {
+        "title": "Edit",
+        "items": {
+          "undo": "Undo",
+          "redo": "Redo",
+          "cut": "Cut",
+          "copy": "Copy",
+          "paste": "Paste",
+          "find": "Find",
+          "replace": "Replace",
+          "formatDocument": "Format Document"
+        }
+      },
+      "view": {
+        "title": "View",
+        "items": {
+          "explorer": "Project Explorer",
+          "inspector": "Properties",
+          "output": "Output",
+          "terminal": "Terminal",
+          "layout": "Layout Preset",
+          "theme": "Color Theme",
+          "language": "Interface Language",
+          "resetLayout": "Reset Layout"
+        }
+      },
+      "build": {
+        "title": "Build",
+        "items": {
+          "build": "Build",
+          "rebuild": "Rebuild",
+          "clean": "Clean",
+          "cleanOutputs": "Clean Outputs",
+          "cleanAll": "Clean Everything (incl. intermediates)",
+          "configuration": "Configuration"
+        }
+      },
+      "run": {
+        "title": "Run",
+        "items": {
+          "start": "Start QEMU",
+          "stop": "Stop",
+          "restart": "Restart"
+        }
+      },
+      "tools": {
+        "title": "Tools",
+        "items": {
+          "toolchainHealth": "Toolchain Health",
+          "refreshDetection": "Re-detect Toolchains",
+          "commandPalette": "Command Palette…"
+        }
+      },
+      "help": {
+        "title": "Help",
+        "items": {
+          "documentation": "Documentation",
+          "changelog": "Changelog",
+          "about": "About MetalForge"
+        }
+      }
+    },
+    "toolbar": {
+      "groupProject": "Project",
+      "groupBuild": "Build",
+      "groupRun": "Run",
+      "groupDebug": "Debug",
+      "groupView": "View"
+    },
+    "panel": {
+      "explorer": "Project",
+      "inspector": "Properties",
+      "bottom": "Output",
+      "bottomLeft": "Console",
+      "bottomCenter": "Serial",
+      "bottomRight": "Monitor"
+    },
+    "tab": {
+      "welcome": "Welcome",
+      "projectFiles": "Files",
+      "projectTemplates": "Templates",
+      "projectSymbols": "Symbols",
+      "inspectorProperties": "Properties",
+      "inspectorArtifact": "Artifact",
+      "inspectorLayoutMap": "Layout Map",
+      "outputBuild": "Build Output",
+      "outputProblems": "Problems",
+      "terminalShell": "Terminal",
+      "terminalSerial": "Serial",
+      "debugConsole": "Debug Console",
+      "debugMonitor": "QEMU Monitor",
+      "aiAgent": "AI Assistant",
+      "toolchainHealth": "Toolchain",
+      "about": "About",
+      "settings": "Settings",
+      "editor": "Editor"
+    },
+    "status": {
+      "arch": "Arch",
+      "bootMethod": "Boot",
+      "configuration": "Config",
+      "toolchain": "Toolchain",
+      "buildState": "Build",
+      "cursor": "Cursor",
+      "problems": "Problems",
+      "debugState": "Debug",
+      "currentFrame": "Frame",
+      "noProject": "No project open",
+      "toolchainReady": "Toolchain ready",
+      "toolchainDegraded": "Toolchain incomplete",
+      "toolchainMissing": "Toolchain missing",
+      "buildIdle": "Not built",
+      "buildSucceeded": "Build succeeded",
+      "buildFailed": "Build failed",
+      "errorsOnly": "{0} errors",
+      "errorsAndWarnings": "{0} errors, {1} warnings",
+      "noProblems": "No problems"
+    },
+    "welcome": {
+      "nextSteps": "What you can do next",
+      "stepNewProject": "Create a project: File → New Project…",
+      "stepOpenProject": "Open an existing project: File → Open Project…",
+      "stepToolchain": "Check installed tools: Tools → Toolchain Health",
+      "stepDocs": "Read the design and usage docs: Help → Documentation",
+      "configHint": "Tip: edit assets/branding/app.json or assets/themes/*.theme.json and save; the UI updates immediately."
+    },
+    "explorer": {
+      "empty": "No project open",
+      "emptyHint": "Use File → New Project… to create your first OSDev project",
+      "refresh": "Refresh",
+      "revealInExplorer": "Reveal in File Explorer",
+      "copyPath": "Copy Path"
+    },
+    "inspector": {
+      "noSelection": "Nothing selected",
+      "noSelectionHint": "Select a file in the project explorer, or select code in the editor"
+    },
+    "output": {
+      "clear": "Clear",
+      "copyAll": "Copy All",
+      "exportLog": "Export Log",
+      "empty": "No output yet",
+      "wrapLines": "Wrap Lines",
+      "followTail": "Follow Tail"
+    },
+    "problems": {
+      "empty": "No problems",
+      "severity": "Severity",
+      "code": "Code",
+      "description": "Description",
+      "location": "Location",
+      "severityError": "Error",
+      "severityWarning": "Warning",
+      "severityInfo": "Info"
+    },
+    "terminal": {
+      "serialTitle": "Serial Output",
+      "disconnected": "Not connected",
+      "waitingForOutput": "Waiting for serial output…",
+      "clearBuffer": "Clear Buffer",
+      "saveBuffer": "Save to File",
+      "baudRate": "Baud Rate",
+      "sendInput": "Send",
+      "send": "Send"
+    },
+    "toolchain": {
+      "title": "Toolchain Health",
+      "subtitle": "MetalForge drives external tools through the command line; this is what it found.",
+      "statusReady": "All present",
+      "statusDegraded": "Partially missing",
+      "statusMissing": "No toolchain detected",
+      "columnTool": "Tool",
+      "columnPurpose": "Purpose",
+      "columnStatus": "Status",
+      "columnVersion": "Version",
+      "columnSource": "Source",
+      "found": "Found",
+      "missing": "Not found",
+      "outdated": "Too old",
+      "required": "Requires {version} or newer",
+      "expectedIn": "Common locations: {paths}",
+      "howToGet": "How to get it",
+      "refresh": "Re-detect",
+      "refreshing": "Detecting…",
+      "lastChecked": "Last checked: {time}",
+      "sourceProjectConfig": "Project configuration",
+      "sourceUserConfig": "User configuration",
+      "sourceManaged": "MetalForge managed directory",
+      "sourcePath": "System PATH",
+      "sourceKnownLocation": "Known install location",
+      "explainTitle": "Why these tools are needed",
+      "explainBody": "MetalForge does not bundle compilers, emulators or flashing tools, and never modifies the system PATH. It detects, verifies and invokes them, and explains how to obtain anything missing."
+    },
+    "dialog": {
+      "ok": "OK",
+      "cancel": "Cancel",
+      "close": "Close",
+      "apply": "Apply",
+      "reset": "Reset",
+      "copy": "Copy",
+      "copied": "Copied",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "settings": {
+      "title": "Settings",
+      "editor": "Editor",
+      "build": "Build",
+      "run": "Run",
+      "appearance": "Appearance",
+      "shortcuts": "Shortcuts",
+      "toolchain": "Toolchain",
+      "ai": "AI Assistant",
+      "language": "Interface Language",
+      "theme": "Color Theme",
+      "layout": "Layout Preset",
+      "density": "Interface Density"
+    }
+  }
+}

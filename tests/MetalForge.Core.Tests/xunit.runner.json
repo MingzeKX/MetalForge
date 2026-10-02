@@ -3,5 +3,6 @@
   "parallelizeTestCollections": true,
   "parallelAlgorithm": "conservative",
   "diagnosticMessages": true,
-  "longRunningTestSeconds": 30
+  "longRunningTestSeconds": 30,
+  "captureConsole": false
 }
