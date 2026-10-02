@@ -178,11 +178,11 @@ try {
         throw ("Client area is empty: {0}x{1}" -f $width, $height)
     }
 
-    # 用真实帧缓冲尺寸做最后一道钳制。
-    # 本机实测：应用报告的屏幕是 2256x1504（150% 缩放），而当前会话的实际帧缓冲
-    # 只有 1280x720（远程/虚拟显示常见）。两者不一致时，窗口本来就会有一部分在
-    # 真实帧缓冲之外，CopyFromScreen 会尝试抓取不存在的像素 —— 结果是图片被
-    # 静默裁切，看起来像"界面少了一块"。这里把抓取矩形裁剪到真实屏幕范围内。
+    # Final clamp against the real framebuffer size.
+    # Measured on this machine: the app reports a 2256x1504 screen (150% scaling) while the
+    # session framebuffer is only 1280x720 (common with remote/virtual displays). When they
+    # disagree, part of the window is genuinely outside the framebuffer; CopyFromScreen then
+    # grabs nonexistent pixels and the image is silently cropped. Clip the capture rect.
     $screenWidth = [MfInterop.NativeWindow]::GetSystemMetrics(0)   # SM_CXSCREEN
     $screenHeight = [MfInterop.NativeWindow]::GetSystemMetrics(1)  # SM_CYSCREEN
 
@@ -229,8 +229,8 @@ try {
 }
 finally {
     if (-not $KeepOpen -and -not $process.HasExited) {
-        # Windows PowerShell 5.1 的 Process 对象来自 .NET Framework，
-        # 没有 Kill(bool entireProcessTree) 重载，只能调用无参 Kill()。
+        # The Process object in Windows PowerShell 5.1 comes from .NET Framework and has no
+        # Kill(bool entireProcessTree) overload; only the parameterless Kill() exists.
         $process.Kill()
         $process.WaitForExit(5000) | Out-Null
         Write-Host 'Application closed.'

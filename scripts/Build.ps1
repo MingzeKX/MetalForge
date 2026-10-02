@@ -18,7 +18,8 @@ param(
 
     [switch] $NoRestore,
 
-    [string] $Solution = 'MetalForge.sln'
+    # The .NET 10 SDK generates an XML-format .slnx by default for "dotnet new sln".
+    [string] $Solution = 'MetalForge.slnx'
 )
 
 Set-StrictMode -Version Latest

@@ -83,6 +83,9 @@
 - `TreatWarningsAsErrors=true`（含 .NET 分析器），当前构建 0 警告 0 错误
 - `ArchitectureTests`：反射强制 Core 不引用 UI 程序集、接口命名、异步命名、私有字段命名
 - `NoHardCodedVisualsTests`：扫描颜色字面量与硬编码品牌名，白名单仅保留必要转换层
+- `ScriptEncodingTests`：强制 `scripts/*.ps1` 保持纯 ASCII（含非 ASCII 会导致
+  Windows PowerShell 5.1 按 ANSI 解码并解析失败——本项目因此踩坑两次），
+  并反向校验 `assets/`、`docs/` 下的 JSON/Markdown 是合法 UTF-8
 - 纯 ASCII 脚本纪律 + `Invoke-RepoScript.ps1` 自举（规避 Windows PowerShell 5.1 的 ANSI 解码陷阱）
 
 #### 脚本
@@ -109,6 +112,9 @@ M0 期间发现并修复的真实缺陷（均记录于 `docs/manual-verification
 - **`Enumerate` 返回不一致的路径形式**：跨层级返回的键随目录前缀变化，改为以文件名去重
 - **窗口标题重复**：无文档时产生 `MetalForge — MetalForge`，改为直接使用应用名
 - **Core 内硬编码调色板**：架构测试抓出后，`ThemePalette` 改为全部可空、无默认颜色值
+- **`Build.ps1` 默认解决方案文件名错误**：仍指向 `MetalForge.sln`，而 SDK 生成的是 `.slnx`；
+  该问题被"我已经手动构建过"掩盖，直到用脚本自身入口做干净重建才暴露。
+  同时把"脚本必须纯 ASCII"变成 `ScriptEncodingTests` 强制检查
 
 ### 已知问题
 

@@ -161,3 +161,81 @@ public sealed class NoHardCodedVisualsTests
         return AllowedRelativePaths.Any(allowed => string.Equals(allowed, relative, StringComparison.OrdinalIgnoreCase));
     }
 }
+
+/// <summary>
+/// 把"脚本必须纯 ASCII"从纪律变成会失败的测试。
+///
+/// 原因：Windows PowerShell 5.1 用系统 ANSI 代码页（中文机器上是 GBK）解码没有 BOM 的 .ps1。
+/// 含非 ASCII 的脚本会变成乱码并解析失败——本项目已经因此两次踩坑，其中一次是
+/// 在一份明确写了这条纪律的 ADR 之后又犯的。凡靠"记得"维持的约定必然失效。
+///
+/// 需要非 ASCII 输出的脚本必须经 scripts/Invoke-RepoScript.ps1 在 pwsh 下运行，
+/// 或把二进制资源放到 .json / .md 里由脚本读取。
+/// </summary>
+public sealed class ScriptEncodingTests
+{
+    [Fact]
+    public void AllPowerShellScripts_MustBeAsciiOnly()
+    {
+        var scriptsDirectory = Path.Combine(TestPaths.RepositoryRoot, "scripts");
+        Assert.True(Directory.Exists(scriptsDirectory), $"找不到脚本目录：{scriptsDirectory}");
+
+        var offenders = new List<string>();
+
+        foreach (var file in Directory.EnumerateFiles(scriptsDirectory, "*.ps1", SearchOption.AllDirectories))
+        {
+            var bytes = File.ReadAllBytes(file);
+            var nonAsciiCount = bytes.Count(b => b > 127);
+
+            if (nonAsciiCount > 0)
+            {
+                var relative = Path.GetRelativePath(TestPaths.RepositoryRoot, file);
+                var hasBom = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF;
+                offenders.Add($"{relative}（{nonAsciiCount} 个非 ASCII 字节，BOM={hasBom}）");
+            }
+        }
+
+        Assert.True(
+            offenders.Count == 0,
+            "PowerShell 脚本必须保持纯 ASCII，否则 Windows PowerShell 5.1 会按 ANSI 解码导致解析失败。\n"
+            + "  需要非 ASCII 内容时：放到 .json/.md 资源里，或经 scripts/Invoke-RepoScript.ps1 用 pwsh 运行。\n  "
+            + string.Join("\n  ", offenders));
+    }
+
+    [Fact]
+    public void AllMarkdownAndJsonAssets_AreValidUtf8()
+    {
+        // 反向约束：资源与文档必须是合法 UTF-8（中文正常显示的前提）。
+        var strictUtf8 = new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+        var failures = new List<string>();
+
+        foreach (var root in new[] { "assets", "docs" })
+        {
+            var directory = Path.Combine(TestPaths.RepositoryRoot, root);
+            if (!Directory.Exists(directory))
+            {
+                continue;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories))
+            {
+                if (Path.GetExtension(file) is not (".json" or ".md"))
+                {
+                    continue;
+                }
+
+                var bytes = File.ReadAllBytes(file);
+                try
+                {
+                    _ = strictUtf8.GetString(bytes);
+                }
+                catch (ArgumentException exception)
+                {
+                    failures.Add($"{Path.GetRelativePath(TestPaths.RepositoryRoot, file)}: {exception.Message}");
+                }
+            }
+        }
+
+        Assert.True(failures.Count == 0, "以下文件不是合法 UTF-8：\n  " + string.Join("\n  ", failures));
+    }
+}
