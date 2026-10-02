@@ -4,7 +4,7 @@
   "checkOnStartup": true,
   "channel": "stable",
   "channels": ["stable", "beta", "alpha"],
-  "endpoint": "https://example.invalid/metalforge/releases/latest.json",
+  "endpoint": "https://api.github.com/repos/MingzeKX/MetalForge/releases/latest",
   "requestTimeoutSeconds": 10,
   "changelogSource": "branding/changelog.json",
   "signing": {

@@ -8,9 +8,10 @@
   "description": "面向 Windows 的多架构操作系统开发 IDE：从引导、内核、驱动到运行时，覆盖 x86_64、i686、AArch64、ARM32、RISC-V 与嵌入式目标。",
   "copyright": "Copyright (c) 2026 MetalForge Contributors",
   "links": [
-    { "id": "home", "label": "项目主页", "uri": "https://example.invalid/metalforge" },
-    { "id": "docs", "label": "文档", "uri": "https://example.invalid/metalforge/docs" },
-    { "id": "issues", "label": "问题反馈", "uri": "https://example.invalid/metalforge/issues" }
+    { "id": "home", "label": "项目主页", "uri": "https://github.com/MingzeKX/MetalForge" },
+    { "id": "docs", "label": "设计文档", "uri": "https://github.com/MingzeKX/MetalForge/blob/main/DESIGN.md" },
+    { "id": "issues", "label": "问题反馈", "uri": "https://github.com/MingzeKX/MetalForge/issues" },
+    { "id": "releases", "label": "版本发布", "uri": "https://github.com/MingzeKX/MetalForge/releases" }
   ],
   "window": {
     "title": "MetalForge",

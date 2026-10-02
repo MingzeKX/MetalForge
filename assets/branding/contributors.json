@@ -10,10 +10,10 @@
   },
   "people": [
     {
-      "name": "MetalForge Contributors",
+      "name": "MingzeKX",
       "role": "maintainer",
-      "note": "项目初始架构与实现",
-      "uri": "https://example.invalid/metalforge"
+      "note": "项目发起、架构设计与实现",
+      "uri": "https://github.com/MingzeKX"
     }
   ]
 }

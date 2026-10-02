@@ -1,0 +1,200 @@
+{
+  "$schema": "./schema/tools.schema.json",
+  "version": 1,
+  "description": "MetalForge 探测的外部工具清单。MetalForge 不随附也不修改这些工具，只做探测、校验与调用；缺失时给出获取指引。",
+  "tools": [
+    {
+      "toolId": "cmake",
+      "displayName": "CMake",
+      "purpose": "生成构建系统；也是 compile_commands.json 的来源，clangd 智能补全依赖它。",
+      "category": "build",
+      "executableName": "cmake.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "3.28",
+      "knownLocations": [
+        "%ProgramFiles%\\CMake\\bin",
+        "%ProgramFiles(x86)%\\CMake\\bin",
+        "%LOCALAPPDATA%\\Programs\\CMake\\bin",
+        "%USERPROFILE%\\scoop\\shims"
+      ],
+      "acquisitionHint": "官方安装包或 zip 解压后加入 PATH",
+      "downloadUrl": "https://cmake.org/download/",
+      "required": true
+    },
+    {
+      "toolId": "ninja",
+      "displayName": "Ninja",
+      "purpose": "CMake 的默认后端；比 Make 更快，且在 Windows 上不依赖 shell。",
+      "category": "build",
+      "executableName": "ninja.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "1.11",
+      "knownLocations": [
+        "%ProgramFiles%\\Ninja",
+        "%USERPROFILE%\\scoop\\shims",
+        "%LOCALAPPDATA%\\Microsoft\\WinGet\\Links"
+      ],
+      "acquisitionHint": "单文件可执行程序，解压即用",
+      "downloadUrl": "https://github.com/ninja-build/ninja/releases",
+      "required": true
+    },
+    {
+      "toolId": "nasm",
+      "displayName": "NASM",
+      "purpose": "x86/x86_64 汇编器；引导扇区与启动汇编需要它。",
+      "category": "build",
+      "executableName": "nasm.exe",
+      "versionArguments": ["-v"],
+      "versionPattern": "(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "2.15",
+      "knownLocations": [
+        "%ProgramFiles%\\NASM",
+        "%ProgramFiles(x86)%\\NASM",
+        "%LOCALAPPDATA%\\bin\\NASM"
+      ],
+      "acquisitionHint": "官方 zip 解压后加入 PATH",
+      "downloadUrl": "https://www.nasm.us/pub/nasm/releasebuilds/",
+      "required": true
+    },
+    {
+      "toolId": "qemu-system-x86_64",
+      "displayName": "QEMU (x86_64)",
+      "purpose": "运行与调试 x86_64 与 i686 内核；串口输出与 GDB stub 都来自它。",
+      "category": "emulator",
+      "executableName": "qemu-system-x86_64.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "version\\s+(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "8.0",
+      "knownLocations": [
+        "%ProgramFiles%\\qemu",
+        "%ProgramFiles(x86)%\\qemu",
+        "%LOCALAPPDATA%\\Programs\\qemu"
+      ],
+      "acquisitionHint": "官方 Windows 安装包；OVMF 固件通常随之提供",
+      "downloadUrl": "https://www.qemu.org/download/#windows",
+      "required": true
+    },
+    {
+      "toolId": "qemu-system-aarch64",
+      "displayName": "QEMU (AArch64)",
+      "purpose": "运行与调试 AArch64 内核。",
+      "category": "emulator",
+      "executableName": "qemu-system-aarch64.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "version\\s+(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "8.0",
+      "knownLocations": [
+        "%ProgramFiles%\\qemu",
+        "%ProgramFiles(x86)%\\qemu"
+      ],
+      "acquisitionHint": "随 QEMU 官方 Windows 安装包一同安装",
+      "downloadUrl": "https://www.qemu.org/download/#windows",
+      "required": false
+    },
+    {
+      "toolId": "gdb",
+      "displayName": "GDB",
+      "purpose": "通过 QEMU 的 GDB stub 做源码级调试：断点、单步、查看变量与寄存器。",
+      "category": "debugger",
+      "executableName": "gdb.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "GNU gdb[^\\d]*(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "12.0",
+      "knownLocations": [
+        "%ProgramFiles%\\mingw64\\bin",
+        "%ProgramFiles%\\LLVM\\bin",
+        "%USERPROFILE%\\scoop\\shims"
+      ],
+      "acquisitionHint": "随交叉工具链提供，或单独安装 MinGW-w64 / LLVM 发行版",
+      "required": true
+    },
+    {
+      "toolId": "clangd",
+      "displayName": "clangd",
+      "purpose": "C/C++ 语言智能：补全、跳转、诊断、头文件/源文件互跳。",
+      "category": "language",
+      "executableName": "clangd.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "clangd version\\s+(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "17.0",
+      "knownLocations": [
+        "%ProgramFiles%\\LLVM\\bin",
+        "%LOCALAPPDATA%\\Programs\\LLVM\\bin"
+      ],
+      "acquisitionHint": "LLVM 官方 Windows 发行包中附带",
+      "downloadUrl": "https://github.com/llvm/llvm-project/releases",
+      "required": false
+    },
+    {
+      "toolId": "clang",
+      "displayName": "Clang",
+      "purpose": "LLVM 工具链路径：可用 --target= 直接交叉编译，无需多套 GCC。",
+      "category": "toolchain",
+      "executableName": "clang.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "clang version\\s+(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "17.0",
+      "knownLocations": [
+        "%ProgramFiles%\\LLVM\\bin",
+        "%LOCALAPPDATA%\\Programs\\LLVM\\bin"
+      ],
+      "acquisitionHint": "LLVM 官方 Windows 发行包",
+      "downloadUrl": "https://github.com/llvm/llvm-project/releases",
+      "required": false
+    },
+    {
+      "toolId": "gcc",
+      "displayName": "GCC",
+      "purpose": "宿主编译器；同时是交叉工具链存在性的参照（x86_64-elf-gcc 等）。",
+      "category": "toolchain",
+      "executableName": "gcc.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "12.0",
+      "knownLocations": [
+        "%ProgramFiles%\\mingw64\\bin",
+        "%ProgramFiles%\\MSYS2\\mingw64\\bin",
+        "%USERPROFILE%\\scoop\\shims"
+      ],
+      "acquisitionHint": "MSYS2、WinLibs 或各自的发行版",
+      "required": false
+    },
+    {
+      "toolId": "openocd",
+      "displayName": "OpenOCD",
+      "purpose": "嵌入式烧录与调试：通过 JTAG/SWD 连接 Cortex-M 等目标板。",
+      "category": "flash",
+      "executableName": "openocd.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "0.12",
+      "knownLocations": [
+        "%ProgramFiles%\\OpenOCD\\bin",
+        "%ProgramFiles(x86)%\\OpenOCD\\bin",
+        "%USERPROFILE%\\scoop\\shims"
+      ],
+      "acquisitionHint": "官方或社区 Windows 构建；必要时由本项目的 CI 构建分发",
+      "downloadUrl": "https://openocd.org/pages/getting-openocd.html",
+      "required": false
+    },
+    {
+      "toolId": "git",
+      "displayName": "Git",
+      "purpose": "项目版本控制；MetalForge 只调用它，不内置图形客户端。",
+      "category": "general",
+      "executableName": "git.exe",
+      "versionArguments": ["--version"],
+      "versionPattern": "git version\\s+(?<major>\\d+)\\.(?<minor>\\d+)(?:\\.(?<patch>\\d+))?",
+      "minimumVersion": "2.30",
+      "knownLocations": [
+        "%ProgramFiles%\\Git\\cmd",
+        "%LOCALAPPDATA%\\Programs\\Git\\cmd"
+      ],
+      "acquisitionHint": "官方安装包",
+      "downloadUrl": "https://git-scm.com/download/win",
+      "required": false
+    }
+  ]
+}

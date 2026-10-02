@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/tools.schema.json",
+  "title": "MetalForge 外部工具清单",
+  "description": "声明 MetalForge 会探测哪些工具、要求什么版本、在哪里找、如何获取。修改本文件即可调整探测行为，无需改代码。",
+  "type": "object",
+  "required": ["version", "tools"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1, "description": "清单格式版本" },
+    "description": { "type": "string", "maxLength": 600 },
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/tool" }
+    }
+  },
+  "$defs": {
+    "tool": {
+      "type": "object",
+      "required": ["toolId", "displayName", "purpose", "executableName"],
+      "additionalProperties": false,
+      "properties": {
+        "toolId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*$",
+          "description": "工具标识，也是托管目录与覆盖配置中的键名"
+        },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "purpose": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 400,
+          "description": "它在 OSDev 流程里做什么。缺失时要让用户明白影响，所以必填"
+        },
+        "category": {
+          "enum": ["build", "toolchain", "emulator", "debugger", "flash", "language", "general"],
+          "description": "界面分组依据"
+        },
+        "executableName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "versionArguments": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "type": "string", "maxLength": 200 },
+          "description": "获取版本号用的参数；留空表示该工具不需要版本探测"
+        },
+        "versionPattern": {
+          "type": "string",
+          "maxLength": 400,
+          "description": "从版本输出中提取版本的正则，必须包含命名组 major（可选 minor/patch/build）"
+        },
+        "minimumVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+(?:\\.[0-9]+){0,3}$",
+          "description": "最低可接受版本（含）"
+        },
+        "knownLocations": {
+          "type": "array",
+          "maxItems": 16,
+          "items": { "type": "string", "maxLength": 300 },
+          "description": "常见安装目录，支持 %ProgramFiles% 这类环境变量"
+        },
+        "acquisitionHint": { "type": "string", "maxLength": 300 },
+        "downloadUrl": { "type": "string", "maxLength": 500 },
+        "required": {
+          "type": "boolean",
+          "description": "是否必需。非必需工具缺失不降低整体就绪状态"
+        }
+      }
+    }
+  }
+}
