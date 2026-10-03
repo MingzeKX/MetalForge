@@ -81,6 +81,12 @@ public sealed class LayoutControlBuilder
         var proportions = node.EffectiveProportions();
         var children = node.Children;
 
+        // 诊断：比例是"布局配置驱动"的核心。比例没生效时界面会悄悄变成另一副样子，
+        // 而截图上很难判断"到底是不是 20%"。这里把实际用于构建的值记录下来。
+        System.Diagnostics.Trace.WriteLine(
+            $"[layout] {orientation} split: {children.Count} children, proportions=" +
+            $"[{string.Join(", ", proportions.Select(p => p.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)))}]");
+
         for (var index = 0; index < children.Count; index++)
         {
             var proportion = index < proportions.Count ? proportions[index] : 1.0 / children.Count;

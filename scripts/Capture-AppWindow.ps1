@@ -1,40 +1,25 @@
 <#
 .SYNOPSIS
-    Launches MetalForge, waits for the main window, captures the client area, then exits.
+    Launches MetalForge (or attaches to a running instance) and captures the screen.
 
 .DESCRIPTION
-    Manual visual verification helper.
+    Verification helper for UI work. Two capture modes:
 
-    "It compiled" is not evidence that the UI renders. A mis-wired theme resource
-    shows up as a blank window rather than as an exception, and an oversized window
-    silently hides whole panels off-screen. This script makes the check
-    reproducible: start the app, grab the window client area, save a PNG, exit.
+      -Window     : capture the app's client area
+      -FullScreen : capture the whole real framebuffer (default)
 
-    The launched process is always terminated, even when capture fails.
+    Why full screen is the default here: on this machine the app is told the screen
+    is 2256x1504 at 150% scaling while the actual framebuffer is smaller. Capturing
+    the client area then needs DPI juggling and gets clipped. Capturing the whole
+    framebuffer always shows exactly what a human sees.
 
-    Implementation notes (each one cost real debugging time):
-      - Capture the CLIENT area via GetClientRect + ClientToScreen. Feeding
-        GetWindowRect's physical pixels to CopyFromScreen produced shifted, cropped
-        images on a 150%-scaled display.
-      - P/Invoke parameters declared `ref` require a pre-created struct instance;
-        only `out` parameters create the variable automatically.
-      - GDI+ reports a missing output directory as a generic "A generic error
-        occurred in GDI+", so the directory is created up front.
+    The app is left running by default so a human can look at the real UI.
+    Pass -CloseAfterCapture to terminate it.
 
-.PARAMETER ExecutablePath
-    Path to MetalForge.exe. Defaults to the Debug build output.
-
-.PARAMETER OutputPath
-    Where to write the PNG. Defaults to build/screenshots/.
-
-.PARAMETER WaitSeconds
-    How long to wait for the main window to appear.
-
-.PARAMETER SettleMilliseconds
-    Extra delay after the window appears, to let one render pass complete.
-
-.EXAMPLE
-    pwsh -File .\scripts\Capture-AppWindow.ps1
+.NOTES
+    ENCODING RULE: this file must stay pure ASCII. Windows PowerShell 5.1 decodes
+    BOM-less .ps1 files using the system ANSI code page, which corrupts non-ASCII
+    text and breaks parsing (enforced by ScriptEncodingTests).
 #>
 [CmdletBinding()]
 param(
@@ -42,11 +27,16 @@ param(
 
     [string] $OutputPath,
 
+    [ValidateSet('FullScreen', 'Window')]
+    [string] $Mode = 'FullScreen',
+
     [int] $WaitSeconds = 20,
 
     [int] $SettleMilliseconds = 1500,
 
-    [switch] $KeepOpen
+    [switch] $NoLaunch,
+
+    [switch] $CloseAfterCapture
 )
 
 Set-StrictMode -Version Latest
@@ -58,15 +48,11 @@ if (-not $ExecutablePath) {
     $ExecutablePath = Join-Path $repositoryRoot 'build\Debug\MetalForge.App\bin\Debug\net10.0\MetalForge.exe'
 }
 
-if (-not (Test-Path -LiteralPath $ExecutablePath)) {
-    throw ("Executable not found: {0}. Build first: .\scripts\Build.ps1" -f $ExecutablePath)
-}
-
 if (-not $OutputPath) {
     $OutputPath = Join-Path $repositoryRoot 'build\screenshots\metalforge.png'
 }
 
-# GDI+ reports a missing directory as an unhelpful generic error; prepare it first.
+# GDI+ reports a missing directory as a generic error with no hint, so prepare it early.
 $OutputPath = [System.IO.Path]::GetFullPath($OutputPath)
 [void][System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($OutputPath))
 
@@ -106,10 +92,16 @@ namespace MfInterop
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
         [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
         public static extern bool IsWindowVisible(IntPtr hWnd);
 
         [DllImport("user32.dll")]
-        public static extern uint GetDpiForWindow(IntPtr hWnd);
+        public static extern bool IsIconic(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         [DllImport("user32.dll")]
         public static extern int GetSystemMetrics(int nIndex);
@@ -121,18 +113,20 @@ if (-not ('MfInterop.NativeWindow' -as [type])) {
     Add-Type -TypeDefinition $interopSource -Language CSharp
 }
 
-$executable = (Resolve-Path -LiteralPath $ExecutablePath).Path
-$workingDirectory = Split-Path -Parent $executable
+$process = $null
+$handle = [System.IntPtr]::Zero
 
-Write-Host ("Launching {0}" -f $executable) -ForegroundColor Cyan
+if (-not $NoLaunch) {
+    if (-not (Test-Path -LiteralPath $ExecutablePath)) {
+        throw ("Executable not found: {0}. Build first: .\scripts\Build.ps1" -f $ExecutablePath)
+    }
 
-$process = Start-Process -FilePath $executable -WorkingDirectory $workingDirectory -PassThru
-$captured = $false
+    $executable = (Resolve-Path -LiteralPath $ExecutablePath).Path
+    Write-Host ("Launching {0}" -f $executable) -ForegroundColor Cyan
 
-try {
+    $process = Start-Process -FilePath $executable -WorkingDirectory (Split-Path -Parent $executable) -PassThru
+
     $deadline = (Get-Date).AddSeconds($WaitSeconds)
-    $handle = [System.IntPtr]::Zero
-
     while ((Get-Date) -lt $deadline) {
         Start-Sleep -Milliseconds 250
 
@@ -142,7 +136,6 @@ try {
 
         $process.Refresh()
         $candidate = $process.MainWindowHandle
-
         if ($candidate -ne [System.IntPtr]::Zero -and [MfInterop.NativeWindow]::IsWindowVisible($candidate)) {
             $handle = $candidate
             break
@@ -152,16 +145,54 @@ try {
     if ($handle -eq [System.IntPtr]::Zero) {
         throw ("No visible main window after {0} seconds." -f $WaitSeconds)
     }
+}
+else {
+    $running = Get-Process -Name 'MetalForge' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($running) {
+        $running.Refresh()
+        $handle = $running.MainWindowHandle
+        $process = $running
+    }
+}
+
+# Bring the window forward. SetForegroundWindow can silently fail under foreground
+# locks, and CopyFromScreen then captures whatever is on top (this project once
+# captured a browser window). Verify instead of assuming.
+if ($handle -ne [System.IntPtr]::Zero) {
+    if ([MfInterop.NativeWindow]::IsIconic($handle)) {
+        [void][MfInterop.NativeWindow]::ShowWindow($handle, 9)  # SW_RESTORE
+        Start-Sleep -Milliseconds 300
+    }
 
     [void][MfInterop.NativeWindow]::SetForegroundWindow($handle)
-    Start-Sleep -Milliseconds $SettleMilliseconds
+    Start-Sleep -Milliseconds 300
+
+    if ([MfInterop.NativeWindow]::GetForegroundWindow() -ne $handle) {
+        Write-Warning 'Target window is not in the foreground; the capture may show another window.'
+    }
+}
+
+Start-Sleep -Milliseconds $SettleMilliseconds
+
+$screenWidth = [MfInterop.NativeWindow]::GetSystemMetrics(0)   # SM_CXSCREEN
+$screenHeight = [MfInterop.NativeWindow]::GetSystemMetrics(1)  # SM_CYSCREEN
+
+if ($Mode -eq 'FullScreen') {
+    $captureX = 0
+    $captureY = 0
+    $captureWidth = $screenWidth
+    $captureHeight = $screenHeight
+}
+else {
+    if ($handle -eq [System.IntPtr]::Zero) {
+        throw 'Window mode requires a window handle.'
+    }
 
     $clientRectangle = New-Object MfInterop.RECT
     if (-not [MfInterop.NativeWindow]::GetClientRect($handle, [ref]$clientRectangle)) {
         throw 'GetClientRect failed.'
     }
 
-    # `ref` parameters need an existing instance; only `out` parameters auto-create.
     $origin = New-Object MfInterop.POINT
     $origin.X = 0
     $origin.Y = 0
@@ -169,74 +200,41 @@ try {
         throw 'ClientToScreen failed.'
     }
 
-    $width = $clientRectangle.Right - $clientRectangle.Left
-    $height = $clientRectangle.Bottom - $clientRectangle.Top
-    $left = $origin.X
-    $top = $origin.Y
+    $captureX = $origin.X
+    $captureY = $origin.Y
+    $captureWidth = $clientRectangle.Right - $clientRectangle.Left
+    $captureHeight = $clientRectangle.Bottom - $clientRectangle.Top
 
-    if ($width -le 0 -or $height -le 0) {
-        throw ("Client area is empty: {0}x{1}" -f $width, $height)
+    if ($captureX -lt 0 -or $captureY -lt 0 -or ($captureX + $captureWidth) -gt $screenWidth -or ($captureY + $captureHeight) -gt $screenHeight) {
+        Write-Warning ("Client area {0},{1} {2}x{3} does not fit the framebuffer {4}x{5}; the image will be clipped." -f `
+            $captureX, $captureY, $captureWidth, $captureHeight, $screenWidth, $screenHeight)
     }
+}
 
-    # Final clamp against the real framebuffer size.
-    # Measured on this machine: the app reports a 2256x1504 screen (150% scaling) while the
-    # session framebuffer is only 1280x720 (common with remote/virtual displays). When they
-    # disagree, part of the window is genuinely outside the framebuffer; CopyFromScreen then
-    # grabs nonexistent pixels and the image is silently cropped. Clip the capture rect.
-    $screenWidth = [MfInterop.NativeWindow]::GetSystemMetrics(0)   # SM_CXSCREEN
-    $screenHeight = [MfInterop.NativeWindow]::GetSystemMetrics(1)  # SM_CYSCREEN
+if ($captureWidth -le 0 -or $captureHeight -le 0) {
+    throw ("Capture area is empty: {0}x{1}" -f $captureWidth, $captureHeight)
+}
 
-    if ($screenWidth -gt 0 -and $screenHeight -gt 0) {
-        $clippedRight = [Math]::Min($left + $width, $screenWidth)
-        $clippedBottom = [Math]::Min($top + $height, $screenHeight)
-        $left = [Math]::Max($left, 0)
-        $top = [Math]::Max($top, 0)
-        $width = $clippedRight - $left
-        $height = $clippedBottom - $top
+Write-Verbose ("capturing {0},{1} {2}x{3} (mode {4})" -f $captureX, $captureY, $captureWidth, $captureHeight, $Mode)
 
-        if ($width -le 0 -or $height -le 0) {
-            throw ("Window lies entirely outside the real framebuffer ({0}x{1})." -f $screenWidth, $screenHeight)
-        }
-
-        Write-Verbose ("framebuffer {0}x{1}; capturing {2},{3} {4}x{5}" -f $screenWidth, $screenHeight, $left, $top, $width, $height)
-    }
-
-    $dpi = [uint32]96
-    try {
-        $dpi = [MfInterop.NativeWindow]::GetDpiForWindow($handle)
-    }
-    catch [System.Management.Automation.MethodInvocationException] {
-        Write-Verbose 'GetDpiForWindow unavailable; assuming 96 DPI.'
-    }
-
-    if ($dpi -lt 48) { $dpi = 96 }
-
-    Write-Verbose ("client origin {0},{1} size {2}x{3}, dpi {4}" -f $left, $top, $width, $height, $dpi)
-
-    $bitmap = New-Object System.Drawing.Bitmap($width, $height)
-    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    try {
-        $graphics.CopyFromScreen($left, $top, 0, 0, $bitmap.Size)
-        $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
-        $captured = $true
-    }
-    finally {
-        $graphics.Dispose()
-        $bitmap.Dispose()
-    }
-
-    Write-Host ("Screenshot saved: {0} ({1}x{2})" -f $OutputPath, $width, $height) -ForegroundColor Green
+$bitmap = New-Object System.Drawing.Bitmap($captureWidth, $captureHeight)
+$graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+try {
+    $graphics.CopyFromScreen($captureX, $captureY, 0, 0, $bitmap.Size)
+    $bitmap.Save($OutputPath, [System.Drawing.Imaging.ImageFormat]::Png)
 }
 finally {
-    if (-not $KeepOpen -and -not $process.HasExited) {
-        # The Process object in Windows PowerShell 5.1 comes from .NET Framework and has no
-        # Kill(bool entireProcessTree) overload; only the parameterless Kill() exists.
-        $process.Kill()
-        $process.WaitForExit(5000) | Out-Null
-        Write-Host 'Application closed.'
-    }
+    $graphics.Dispose()
+    $bitmap.Dispose()
 }
 
-if (-not $captured) {
-    exit 1
+Write-Host ("Screenshot saved: {0} ({1}x{2})" -f $OutputPath, $captureWidth, $captureHeight) -ForegroundColor Green
+
+if ($CloseAfterCapture -and $process -and -not $process.HasExited) {
+    $process.Kill()
+    $process.WaitForExit(5000) | Out-Null
+    Write-Host 'Application closed.'
+}
+elseif ($process -and -not $process.HasExited) {
+    Write-Host ("Application left running (PID {0})." -f $process.Id) -ForegroundColor Cyan
 }

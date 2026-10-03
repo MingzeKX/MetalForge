@@ -62,10 +62,80 @@
     <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
   </Style>
 
-  <!-- 顶部菜单栏 -->
-  <Style Selector="Menu.app-menu">
+  <!--
+    顶部菜单条：Button + Flyout 自建（不是 Avalonia 的 Menu 控件）。
+    原因：Menu 的默认模板内建下拉箭头，且模板部件未公开，样式改不掉；
+    而 IDE 的惯例是"点击标题弹出列表"（同 Windows 右键菜单），没有箭头。
+  -->
+  <Style Selector="Border.app-menubar">
     <Setter Property="Background" Value="{DynamicResource MfSurface}" />
-    <Setter Property="Padding" Value="{DynamicResource MfSpace1}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource MfBorder}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="4,2" />
+  </Style>
+
+  <Style Selector="Button.menubar-item">
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeBase}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadiusSmall}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.menubar-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource MfSurfaceRaised}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.menubar-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource MfAccentPressed}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.menubar-item:focus /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- 弹出菜单里的条目：左对齐、占满整行（像 Windows 右键菜单） -->
+  <Style Selector="Button.menu-item">
+    <Setter Property="Padding" Value="10,5" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeBase}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadiusSmall}" />
+  </Style>
+
+  <Style Selector="Button.menu-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource MfSurfaceRaised}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.menu-item:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style Selector="Button.menu-item:disabled">
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundDisabled}" />
+  </Style>
+
+  <Style Selector="TextBlock.menu-gesture">
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Separator.menu-separator">
+    <Setter Property="Background" Value="{DynamicResource MfBorder}" />
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="6,4" />
   </Style>
 
   <!-- 工具栏 -->
@@ -73,7 +143,54 @@
     <Setter Property="Background" Value="{DynamicResource MfSurface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource MfBorder}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
-    <Setter Property="Padding" Value="{DynamicResource MfSpace1}" />
+    <Setter Property="Padding" Value="6,4" />
+  </Style>
+
+  <!--
+    工具栏按钮：三个真实问题一起修
+      1) 默认 Fluent 按钮内边距很大；1024 宽的窗口里 11 个按钮会超出宽度，
+         实测"停止"之后的条目全被窗口右边缘裁掉（用户描述的"挤压"）；
+      2) 点击后出现蓝色焦点/选中描边，用户明确表示不想要；
+      3) 按钮高度撑满工具栏，显得臃肿。
+    注意：去掉的是**鼠标**点击产生的焦点视觉；键盘导航的焦点环仍然保留（可访问性要求）。
+  -->
+  <Style Selector="Button.toolbar-button">
+    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadiusSmall}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.toolbar-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource MfSurfaceRaised}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.toolbar-button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource MfAccentPressed}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <!-- 鼠标点击后不显示焦点环；键盘 Tab 导航（focus-visible）时仍然显示 -->
+  <Style Selector="Button.toolbar-button:focus /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.toolbar-button:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource MfAccent}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Rectangle.toolbar-separator">
+    <Setter Property="Fill" Value="{DynamicResource MfBorder}" />
+    <Setter Property="Width" Value="1" />
+    <Setter Property="Height" Value="16" />
+    <Setter Property="Margin" Value="6,0" />
   </Style>
 
   <!-- 状态栏 -->

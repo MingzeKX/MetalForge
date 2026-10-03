@@ -16,8 +16,8 @@
   "window": {
     "title": "MetalForge",
     "titleTemplate": "{document}{dirtyIndicator} — {app}",
-    "defaultWidth": 1280,
-    "defaultHeight": 720,
+    "defaultWidth": 1000,
+    "defaultHeight": 640,
     "minimumWidth": 1024,
     "minimumHeight": 640,
     "startMaximized": false,

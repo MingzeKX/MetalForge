@@ -426,7 +426,7 @@ public sealed partial class ShellViewModel : ObservableObject
         "build.clean" => Item("menu.build.items.clean", commandIdOverride: commandId),
         "run.qemu" => Item("menu.run.items.start", commandIdOverride: commandId),
         "run.stop" => Item("menu.run.items.stop", commandIdOverride: commandId),
-        "debug.start" => Item("menu.run.items.start", commandIdOverride: "debug.start"),
+        "debug.start" => Item("menu.run.items.debugStart", commandIdOverride: "debug.start"),
         "debug.stepOver" => Placeholder("debug.stepOver", "单步跳过"),
         "debug.stepInto" => Placeholder("debug.stepInto", "单步进入"),
         "debug.stop" => Placeholder("debug.stop", "停止调试"),

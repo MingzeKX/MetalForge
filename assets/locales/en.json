@@ -65,6 +65,7 @@
         "items": {
           "start": "Start QEMU",
           "stop": "Stop",
+          "debugStart": "Start Debugging",
           "restart": "Restart"
         }
       },

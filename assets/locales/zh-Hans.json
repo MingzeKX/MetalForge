@@ -65,6 +65,7 @@
         "items": {
           "start": "启动 QEMU",
           "stop": "停止",
+          "debugStart": "启动调试",
           "restart": "重新启动"
         }
       },

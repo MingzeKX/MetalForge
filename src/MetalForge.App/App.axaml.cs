@@ -145,7 +145,12 @@ public partial class App : Application
         };
 
         ApplyInitialSize(window, branding.Window);
-        window.Opened += (_, _) => ClampToScreen(window);
+        window.Opened += (_, _) =>
+        {
+            LogWindowGeometry(window, "opened");
+            ClampToScreen(window);
+            LogWindowGeometry(window, "clamped");
+        };
 
         // 启动后异步探测一次工具链：不阻塞首屏，也不在无工具时让界面显示"未知"。
         _ = ProbeToolchainAsync(window);

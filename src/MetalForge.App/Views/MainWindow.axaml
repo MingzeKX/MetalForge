@@ -7,9 +7,13 @@
         Background="{DynamicResource MfBackground}"
         Width="1280" Height="720">
   <!--
-    经典 IDE 布局的容器部分：菜单栏（可选）、工具栏（可选）、中央面板树、状态栏（可选）。
+    经典 IDE 布局的容器：菜单条（可选）、工具栏（可选）、中央面板树、状态栏（可选）。
     中央那棵树由 LayoutControlBuilder 从 assets/layouts/*.layout.json 构建，
     因此这里没有硬编码的栏位结构。
+
+    菜单条刻意不用 Avalonia 的 Menu 控件，而是 Button + Flyout：
+    Menu 的默认模板内建了下拉箭头，且模板部件未公开，无法通过样式去掉。
+    IDE 的惯例是"点击标题弹出列表"（同 Windows 右键菜单），没有箭头。
   -->
   <DockPanel LastChildFill="True">
 
@@ -42,59 +46,81 @@
       </Grid>
     </Border>
 
-    <!-- 菜单栏 -->
-    <Menu DockPanel.Dock="Top"
-          Classes="app-menu"
-          IsVisible="{Binding ShowMenuBar}"
-          ItemsSource="{Binding MenuItems}">
-      <Menu.ItemTemplate>
-        <DataTemplate DataType="vm:CommandItemViewModel">
-          <MenuItem Header="{Binding Label}"
-                    ItemsSource="{Binding Children}"
-                    IsEnabled="{Binding IsEnabled}"
-                    ToolTip.Tip="{Binding DisabledReason}">
-            <MenuItem.ItemTemplate>
-              <DataTemplate DataType="vm:CommandItemViewModel">
-                <MenuItem Header="{Binding Label}"
-                          IsEnabled="{Binding IsEnabled}"
-                          InputGesture="{Binding Gesture}"
-                          ToolTip.Tip="{Binding DisabledReason}"
-                          Command="{Binding $parent[Window].((vm:ShellViewModel)DataContext).InvokeCommand}"
-                          CommandParameter="{Binding}" />
-              </DataTemplate>
-            </MenuItem.ItemTemplate>
-          </MenuItem>
-        </DataTemplate>
-      </Menu.ItemTemplate>
-    </Menu>
-
-    <!-- 工具栏 -->
-    <Border DockPanel.Dock="Top" Classes="app-toolbar" IsVisible="{Binding ShowToolbar}">
-      <ItemsControl ItemsSource="{Binding ToolbarItems}">
+    <!-- 菜单条 -->
+    <Border DockPanel.Dock="Top" Classes="app-menubar" IsVisible="{Binding ShowMenuBar}">
+      <ItemsControl x:Name="menuBar" ItemsSource="{Binding MenuItems}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <StackPanel Orientation="Horizontal" Spacing="4" />
+            <StackPanel Orientation="Horizontal" Spacing="2" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="vm:CommandItemViewModel">
-            <StackPanel>
-              <Rectangle x:Name="separator"
-                         Width="1"
-                         Height="{DynamicResource MfToolbarHeight}"
-                         Fill="{DynamicResource MfBorder}"
-                         IsVisible="{Binding IsSeparator}" />
-              <Button x:Name="commandButton"
-                      Content="{Binding Label}"
-                      IsVisible="{Binding !IsSeparator}"
-                      IsEnabled="{Binding IsEnabled}"
-                      ToolTip.Tip="{Binding DisabledReason}"
-                      Command="{Binding $parent[Window].((vm:ShellViewModel)DataContext).InvokeCommand}"
-                      CommandParameter="{Binding}" />
-            </StackPanel>
+            <Button Classes="menubar-item"
+                    Content="{Binding Label}">
+              <Button.Flyout>
+                <Flyout Placement="BottomEdgeAlignedLeft" ShowMode="Standard">
+                  <ItemsControl ItemsSource="{Binding Children}" MinWidth="220">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="vm:CommandItemViewModel">
+                        <Panel>
+                          <Separator Classes="menu-separator" IsVisible="{Binding IsSeparator}" />
+                          <Button Classes="menu-item"
+                                  IsVisible="{Binding !IsSeparator}"
+                                  IsEnabled="{Binding IsEnabled}"
+                                  ToolTip.Tip="{Binding DisabledReason}"
+                                  Command="{Binding $parent[Window].((vm:ShellViewModel)DataContext).InvokeCommand}"
+                                  CommandParameter="{Binding}">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <TextBlock Grid.Column="0" Text="{Binding Label}" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="menu-gesture"
+                                         Margin="24,0,0,0"
+                                         Text="{Binding Gesture}" />
+                            </Grid>
+                          </Button>
+                        </Panel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Flyout>
+              </Button.Flyout>
+            </Button>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+    </Border>
+
+    <!-- 工具栏：内容可能比窗口宽，因此放进横向滚动容器，宁可滚动也不裁切 -->
+    <Border DockPanel.Dock="Top" Classes="app-toolbar" IsVisible="{Binding ShowToolbar}">
+      <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Disabled"
+                    HorizontalAlignment="Stretch">
+        <ItemsControl ItemsSource="{Binding ToolbarItems}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="2" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:CommandItemViewModel">
+              <Panel>
+                <Rectangle x:Name="toolbarSeparator"
+                           Classes="toolbar-separator"
+                           IsVisible="{Binding IsSeparator}" />
+                <Button x:Name="toolbarButton"
+                        Classes="toolbar-button"
+                        Content="{Binding Label}"
+                        IsVisible="{Binding !IsSeparator}"
+                        IsEnabled="{Binding IsEnabled}"
+                        ToolTip.Tip="{Binding DisabledReason}"
+                        Command="{Binding $parent[Window].((vm:ShellViewModel)DataContext).InvokeCommand}"
+                        CommandParameter="{Binding}" />
+              </Panel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
     </Border>
 
     <!-- 文档区 + 面板树（内容来自布局配置） -->
