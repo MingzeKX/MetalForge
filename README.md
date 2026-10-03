@@ -1,7 +1,8 @@
 # MetalForge
 
 > 把写操作系统，变成写普通 C 程序。
-> **当前状态：M0（规划与仓库基建）已完成，M1（外壳与配置系统）进行中。**
+> **当前状态：M0（规划与仓库基建）、M1（外壳与配置系统）已完成。**
+> 验收记录：[`docs/manual-verification/M1.md`](docs/manual-verification/M1.md)
 
 **仓库：https://github.com/MingzeKX/MetalForge**
 
@@ -12,17 +13,30 @@ git clone https://github.com/MingzeKX/MetalForge.git
 MetalForge 是一个面向 Windows 的多架构操作系统开发 IDE，把交叉工具链、引导流程、
 QEMU 运行、GDB 调试与固件烧录编排成一条闭环，让裸机开发具备普通应用开发的迭代速度。
 
-> ⚠️ **这不是一个可用的 IDE，现在还不是。** 它目前是一个可运行的外壳：
-> 配置系统、主题系统、分层架构与质量门禁已经落地并验证；
+> ⚠️ **这不是一个可用的 IDE，现在还不是。** 它目前是一个**可以使用的外壳**：
+> 配置系统、主题系统、项目浏览器、代码编辑器、语法高亮与质量门禁已经落地并验证；
 > 构建、运行、调试、模板向导等功能在 M2–M5 实现。
 > 请先阅读 [`DESIGN.md`](DESIGN.md) 了解完整规划。
 
 ## 现在能做什么
 
+- 打开一个 OSDev 项目（含 `metalforge.json` 的目录），在文件树里浏览与双击打开源文件
+- 用代码编辑器读写源文件，带行号、光标位置与未保存标记
+- 语法高亮 7 种 OSDev 格式：NASM、GNU 汇编、链接脚本、Makefile、
+  Device Tree、EDK2 INF/DEC/DSC、GRUB 配置（颜色随主题变化）
 - 启动一个由 JSON 完全驱动的应用外壳（品牌、主题、布局、启动参数）
 - 改 JSON 即时看到界面变化（配置热重载，含错误回退与可读诊断）
-- 探测本机工具链并给出健康报告与获取指引（Core 已就绪，界面在 M1）
-- 跑测试（119 个，覆盖配置系统、Schema 校验、布局、i18n、进程执行与架构约束）
+- 探测本机工具链并给出健康报告与获取指引
+- 查看架构 × 引导方式目标矩阵（8 × 9，含交叉一致性校验）
+- 跑测试（200 个）
+
+命令行：
+
+```powershell
+.\MetalForge.exe                                   # 打开空外壳
+.\MetalForge.exe --project C:\my-os                # 打开项目
+.\MetalForge.exe --project C:\my-os src\boot\boot.S # 打开项目并打开文件
+```
 
 ## 现在不能做什么
 
@@ -38,7 +52,7 @@ QEMU 运行、GDB 调试与固件烧录编排成一条闭环，让裸机开发�
 # 需要 .NET SDK 10.0.4xx（见 global.json）
 .\scripts\Build.ps1          # 构建全部工程
 .\scripts\Test.ps1           # 运行测试
-.\scripts\Capture-AppWindow.ps1   # 启动应用并截图（验证界面渲染）
+node scripts\capture-window.mjs   # 启动应用并截图（验证界面渲染）
 ```
 
 **注意**：请使用 `scripts/` 下的脚本，而不是直接 `dotnet test`。

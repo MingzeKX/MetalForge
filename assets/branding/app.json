@@ -3,7 +3,7 @@
   "id": "metalforge",
   "name": "MetalForge",
   "publisher": "MetalForge Project",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "tagline": "把写操作系统，变成写普通 C 程序",
   "description": "面向 Windows 的多架构操作系统开发 IDE：从引导、内核、驱动到运行时，覆盖 x86_64、i686、AArch64、ARM32、RISC-V 与嵌入式目标。",
   "copyright": "Copyright (c) 2026 MetalForge Contributors",

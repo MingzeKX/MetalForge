@@ -27,7 +27,7 @@
     <Deterministic>true</Deterministic>
 
     <!-- 版本真相源：发布时由 CI 或 -p:Version= 覆盖 -->
-    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionPrefix>0.0.2</VersionPrefix>
     <Company>MetalForge</Company>
     <Product>MetalForge</Product>
     <Authors>MetalForge Contributors</Authors>

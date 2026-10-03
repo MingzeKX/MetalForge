@@ -11,6 +11,27 @@
   },
   "releases": [
     {
+      "version": "0.0.2",
+      "date": "2026-02-14",
+      "channel": "alpha",
+      "summary": "M1：可用的 IDE 外壳、代码编辑器与项目系统。",
+      "entries": [
+        { "category": "added", "text": "IDE 外壳：菜单栏、工具栏、项目浏览器、多标签编辑器、属性面板、底部标签页、状态栏" },
+        { "category": "added", "text": "代码编辑器（AvaloniaEdit）：打开/保存、行号、光标位置、只读与错误提示条" },
+        { "category": "added", "text": "自研语法高亮 7 种：NASM、GNU 汇编、链接脚本、Makefile、Device Tree、EDK2、GRUB 配置" },
+        { "category": "added", "text": "语法高亮配色由主题生成，不在定义文件里写死颜色" },
+        { "category": "added", "text": "项目系统：metalforge.json、按需加载的文件树、可读的加载诊断" },
+        { "category": "added", "text": "目标矩阵：8 种架构 × 9 种引导方式，双矩阵交叉一致性校验" },
+        { "category": "added", "text": "启动画面、窗口图标、窗口尺寸与位置记忆" },
+        { "category": "added", "text": "工具链健康面板：探测结果与语法高亮自检" },
+        { "category": "added", "text": "命令行：--project <目录> [文件]" },
+        { "category": "fixed", "text": "修复编辑器不绘制内容的根因（缺少 AvaloniaEdit 控件模板引入）" },
+        { "category": "fixed", "text": "修复文档区内容被赋给已脱离视觉树控件的问题" },
+        { "category": "fixed", "text": "修复启动画面与主窗口同时可见" },
+        { "category": "fixed", "text": "修复标签下划线过高与关闭按钮过大" },
+        { "category": "changed", "text": "菜单栏改为点击弹出式；工具栏按钮收紧并支持横向滚动" }
+      ]
+    },    {
       "version": "0.0.1",
       "date": "2026-02-01",
       "channel": "alpha",
