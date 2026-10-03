@@ -42,7 +42,7 @@ public sealed class ShellCompositionTests : IDisposable
     private ShellViewModel CreateShell()
         // 布局工厂返回 null 控件即可：本测试只关心菜单/工具栏/状态栏的数据，
         // 不构建视觉树（那需要 Avalonia 平台初始化）。
-        => new(_configuration, _localization, _ => null!);
+        => new(_configuration, _localization, _ => null!, new EditorViewModel(_localization, _ => null));
 
     [Fact]
     public void Rebuild_ProducesMenuToolbarAndStatusEntries()

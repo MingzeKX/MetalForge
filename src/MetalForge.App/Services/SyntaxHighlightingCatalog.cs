@@ -67,6 +67,60 @@ public sealed class SyntaxHighlightingCatalog
     /// <summary>已成功注册的定义名。</summary>
     public IReadOnlyList<string> RegisteredNames => [.. _definitions.Keys];
 
+    /// <summary>
+    /// 高亮自检：对每种定义跑一遍真实代码样本，确认它**确实能匹配到东西**。
+    ///
+    /// 为什么需要：语法高亮失效不会报错，只会静静地变成一片单色文字。
+    /// 而 XSHD 规则很容易写错（正则不匹配、关键字表漏词、转义写坏），
+    /// 写错的结果与"没装高亮"在界面上完全一样。这里用样本把两者区分开。
+    /// </summary>
+    /// <returns>定义名 → 命中的高亮区段数；未注册的定义不会出现。</returns>
+    public IReadOnlyDictionary<string, int> SelfTest(IReadOnlyDictionary<string, string>? samples = null)
+    {
+        var source = samples ?? SelfTestSamples;
+        var results = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (name, code) in source)
+        {
+            if (!_definitions.TryGetValue(name, out var definition))
+            {
+                continue;
+            }
+
+            try
+            {
+                var document = new AvaloniaEdit.Document.TextDocument(code);
+                using var highlighter = new AvaloniaEdit.Highlighting.DocumentHighlighter(document, definition);
+                var highlightedLine = highlighter.HighlightLine(1);
+                results[name] = highlightedLine.Sections.Count;
+            }
+            catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
+            {
+                results[name] = 0;
+                _diagnostics.Add(new Diagnostic(
+                    DiagnosticSeverity.Warning,
+                    "MFHL003",
+                    $"高亮自检 '{name}' 执行失败：{exception.Message}",
+                    Hint: "该语言可能无法正常着色。",
+                    Exception: exception));
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>每种定义的最小可验证样本：必须至少命中一个高亮区段。</summary>
+    private static readonly Dictionary<string, string> SelfTestSamples = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["NASM"] = "start: mov rax, 0x10 ; comment",
+        ["GNU Assembler"] = "_start: movq $0x1, %rax # comment",
+        ["Linker Script"] = "SECTIONS { __start = ALIGN(4096); }",
+        ["Makefile"] = "all: $(OBJECTS)\n\t$(CC) -o $@ $<",
+        ["Device Tree"] = "cpus { compatible = \"arm,cortex-a53\"; };",
+        ["EDK2 Module"] = "[Sources]\n  main.c",
+        ["GRUB Config"] = "menuentry 'OS' { multiboot2 /boot/kernel.elf }",
+    };
+
     /// <summary>注册全部自研高亮定义。重复调用无副作用。</summary>
     public void RegisterAll()
     {

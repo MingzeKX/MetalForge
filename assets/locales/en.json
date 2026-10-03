@@ -16,6 +16,7 @@
         "items": {
           "newProject": "New Project…",
           "openProject": "Open Project…",
+          "openFile": "Open File…",
           "closeProject": "Close Project",
           "recent": "Recent",
           "save": "Save",
@@ -250,6 +251,10 @@
       "categoryLanguage": "Language services",
       "categoryGeneral": "Other",
       "missingSectionTitle": "Still missing these required tools",
+      "highlightTitle": "Syntax highlighting self-test",
+      "highlightSummary": "{0}/{1} languages produced highlighted sections on their sample.",
+      "highlightOk": "{0} highlighted sections",
+      "highlightBroken": "rules did not match (this language renders as plain text)",
       "explainTitle": "Why these tools are needed",
       "explainBody": "MetalForge does not bundle compilers, emulators or flashing tools, and never modifies the system PATH. It detects, verifies and invokes them, and explains how to obtain anything missing."
     },

@@ -46,6 +46,20 @@ public sealed partial class ToolGroupViewModel : ObservableObject
     public IReadOnlyList<ToolRowViewModel> Tools { get; init; } = [];
 }
 
+/// <summary>语法高亮的一条自检结果。</summary>
+public sealed partial class HighlightStatusViewModel : ObservableObject
+{
+    public required string LanguageName { get; init; }
+
+    /// <summary>自检命中的高亮区段数；0 表示该语言的规则实际没有生效。</summary>
+    public required int MatchedSections { get; init; }
+
+    public required string StatusText { get; init; }
+
+    /// <summary>0 区段用警示色：那说明高亮写错了，而不是"没有语法"。</summary>
+    public string StatusBrushKey => MatchedSections > 0 ? "MfSuccess" : "MfWarning";
+}
+
 /// <summary>
 /// 工具链健康面板（G-01 的界面部分）。
 ///
@@ -93,6 +107,19 @@ public sealed partial class ToolchainHealthViewModel : ObservableObject
     [ObservableProperty]
     private string _explainBody = string.Empty;
 
+    /// <summary>
+    /// 语法高亮自检结果。与工具链无关，但同属"当前环境是否正常"，
+    /// 放在同一面板可以让用户在一个地方确认"IDE 自身能力"是否可用。
+    /// </summary>
+    [ObservableProperty]
+    private IReadOnlyList<HighlightStatusViewModel> _highlightStatuses = [];
+
+    [ObservableProperty]
+    private string _highlightTitle = string.Empty;
+
+    [ObservableProperty]
+    private string _highlightSummary = string.Empty;
+
     public ToolchainHealthViewModel(
         IToolLocator locator,
         Func<string, string> localize,
@@ -105,6 +132,33 @@ public sealed partial class ToolchainHealthViewModel : ObservableObject
         _locator = locator;
         _localize = localize;
         _format = format;
+    }
+
+    /// <summary>
+    /// 填入语法高亮自检结果（由宿主在探测器就绪后调用）。
+    /// 不在构造函数里做：探测要读文件与加载定义，属于启动路径外的工作。
+    /// </summary>
+    public void SetHighlightStatuses(IReadOnlyDictionary<string, int> results)
+    {
+        ArgumentNullException.ThrowIfNull(results);
+
+        HighlightTitle = _localize("toolchain.highlightTitle");
+        HighlightStatuses =
+        [
+            .. results
+                .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(pair => new HighlightStatusViewModel
+                {
+                    LanguageName = pair.Key,
+                    MatchedSections = pair.Value,
+                    StatusText = pair.Value > 0
+                        ? _format("toolchain.highlightOk", [pair.Value])
+                        : _localize("toolchain.highlightBroken"),
+                }),
+        ];
+
+        var working = results.Count(pair => pair.Value > 0);
+        HighlightSummary = _format("toolchain.highlightSummary", [working, results.Count]);
     }
 
     /// <summary>执行探测并刷新界面。</summary>

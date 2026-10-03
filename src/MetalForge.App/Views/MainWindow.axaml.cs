@@ -1,11 +1,15 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using MetalForge.App.ViewModels;
 
 namespace MetalForge.App.Views;
 
 public partial class MainWindow : Window
 {
+    private ShellViewModel? _shell;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -14,6 +18,69 @@ public partial class MainWindow : Window
         // Button 不会自动打开自己的 Flyout，因此这里统一处理一次，
         // 而不是给每个菜单项挂事件处理器。
         AddHandler(Button.ClickEvent, OnAnyButtonClick, RoutingStrategies.Bubble);
+
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs args)
+    {
+        if (_shell is not null)
+        {
+            _shell.FileOpenRequested -= OnFileOpenRequested;
+        }
+
+        _shell = DataContext as ShellViewModel;
+
+        if (_shell is not null)
+        {
+            _shell.FileOpenRequested += OnFileOpenRequested;
+        }
+    }
+
+    /// <summary>
+    /// 弹出文件选择对话框，并把选中的文件交给编辑器。
+    /// 对话框与窗口属于 UI 层，因此由视图处理；ViewModel 只发出请求事件。
+    /// </summary>
+    private async void OnFileOpenRequested(object? sender, EventArgs args)
+    {
+        if (_shell is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "打开文件",
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("OSDev 源文件")
+                    {
+                        Patterns = ["*.c", "*.h", "*.cpp", "*.hpp", "*.S", "*.s", "*.asm", "*.nasm",
+                                    "*.ld", "*.lds", "*.mk", "Makefile", "*.dts", "*.dtsi",
+                                    "*.inf", "*.dec", "*.dsc", "*.cfg", "*.json", "*.md"],
+                    },
+                    FilePickerFileTypes.All,
+                ],
+            });
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            if (files[0].TryGetLocalPath() is { Length: > 0 } path)
+            {
+                _shell.OpenInEditor(path);
+            }
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or NotSupportedException)
+        {
+            // 平台不支持文件选择器（例如无头环境）：不能让异常冒到 UI 线程导致进程退出。
+            Console.WriteLine($"[shell] 文件选择器不可用：{exception.Message}");
+        }
     }
 
     /// <summary>
@@ -37,11 +104,10 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 布局自检：把布局区里每个直接子栏位的实际宽度写进日志。
+    /// 布局自检：把布局区里每个栏位的实际宽度写进日志。
     ///
     /// 为什么需要它：布局比例来自 JSON，但"比例是否真的生效"在截图上很难判断
-    /// （本项目就出现过声明 0.2 实际渲染约 0.6 的情况）。把实测值打出来，
-    /// 就不必靠肉眼估算像素。
+    /// （本项目两次凭截图误判比例）。把实测值打出来，就不必靠肉眼估算像素。
     /// </summary>
     protected override void OnOpened(EventArgs e)
     {
@@ -90,4 +156,3 @@ public partial class MainWindow : Window
         }
     }
 }
-

@@ -86,6 +86,9 @@ internal static class Program
         // 语法高亮目录：通用语言用 AvaloniaEdit 的内置定义，
         // NASM/GAS/链接脚本/Makefile 等 OSDev 常用格式由本项目提供（内置里没有）。
         // 模板里的颜色角色由当前主题填充 —— 因此它的构造依赖配置服务。
+        //
+        // 注册时顺带跑一次自检并把结果填进工具链面板：
+        // 高亮失效不会报错，只会静默变成一片单色文字，因此必须能被看见。
         services.AddSingleton(provider =>
         {
             var theme = provider.GetRequiredService<IConfigurationService>().Current.Theme;
@@ -97,6 +100,9 @@ internal static class Program
             {
                 ApplicationLog.SyntaxHighlightingFailed(logger, diagnostic.ToString());
             }
+
+            var health = provider.GetRequiredService<ToolchainHealthViewModel>();
+            health.SetHighlightStatuses(catalog.SelfTest());
 
             return catalog;
         });
@@ -128,7 +134,8 @@ internal static class Program
         services.AddSingleton<ShellViewModel>(provider => new ShellViewModel(
             provider.GetRequiredService<IConfigurationService>(),
             provider.GetRequiredService<ILocalizationService>(),
-            provider.GetRequiredService<Func<LayoutPreset, Control>>()));
+            provider.GetRequiredService<Func<LayoutPreset, Control>>(),
+            provider.GetRequiredService<EditorViewModel>()));
 
         return services.BuildServiceProvider(new ServiceProviderOptions
         {

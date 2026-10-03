@@ -22,6 +22,7 @@ public sealed partial class ShellViewModel : ObservableObject
     private readonly IConfigurationService _configuration;
     private readonly ILocalizationService _localization;
     private readonly Func<LayoutPreset, Control> _layoutFactory;
+    private readonly EditorViewModel _editor;
 
     [ObservableProperty]
     private string _windowTitle = "MetalForge";
@@ -68,15 +69,18 @@ public sealed partial class ShellViewModel : ObservableObject
     public ShellViewModel(
         IConfigurationService configuration,
         ILocalizationService localization,
-        Func<LayoutPreset, Control> layoutFactory)
+        Func<LayoutPreset, Control> layoutFactory,
+        EditorViewModel editor)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(localization);
         ArgumentNullException.ThrowIfNull(layoutFactory);
+        ArgumentNullException.ThrowIfNull(editor);
 
         _configuration = configuration;
         _localization = localization;
         _layoutFactory = layoutFactory;
+        _editor = editor;
 
         _localization.LanguageChanged += (_, _) => RebuildLocalizedContent();
         _configuration.ConfigurationChanged += (_, _) => RebuildLocalizedContent();
@@ -156,6 +160,44 @@ public sealed partial class ShellViewModel : ObservableObject
     {
         OpenDocument("settings", _localization["tab.settings"]);
     }
+
+    /// <summary>
+    /// "打开文件…"的请求事件。由宿主（窗口）接管：ViewModel 不碰窗口与对话框，
+    /// 这是保持 Core/ViewModel 可测试的分界线。
+    /// </summary>
+    public event EventHandler? FileOpenRequested;
+
+    /// <summary>保存当前编辑器文档。</summary>
+    [RelayCommand]
+    public void SaveActiveDocument()
+    {
+        if (ActiveEditorDocument is { } document)
+        {
+            EditorViewModel.Save(document);
+        }
+    }
+
+    private void OpenFileRequested() => FileOpenRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
+    /// 在一个编辑器标签页里打开文件（由宿主提供的对话框选取，或直接给路径）。
+    /// 打开后把文档区切到编辑器标签页，否则用户看不到刚打开的文件。
+    /// </summary>
+    public void OpenInEditor(string filePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var document = _editor.Open(filePath);
+        OpenDocument("editor", _localization["tab.editor"]);
+
+        // 文档区里的编辑器标签页此刻可能显示的是"未命名"文档，
+        // 因此把它的 DataContext 切到刚打开的文件上。
+        ActiveEditorDocument = document;
+    }
+
+    /// <summary>当前在编辑器标签页里显示的文档。</summary>
+    [ObservableProperty]
+    private EditorDocumentViewModel? _activeEditorDocument;
 
     /// <summary>关闭一个文档标签页。</summary>
     [RelayCommand]
@@ -267,9 +309,10 @@ public sealed partial class ShellViewModel : ObservableObject
         Menu("menu.file.title",
             Item("menu.file.items.newProject"),
             Item("menu.file.items.openProject"),
+            Item("menu.file.items.openFile", Execute: OpenFileRequested),
             Item("menu.file.items.closeProject"),
             Separator(),
-            Item("menu.file.items.save", gesture: "Ctrl+S"),
+            Item("menu.file.items.save", gesture: "Ctrl+S", Execute: SaveActiveDocument),
             Item("menu.file.items.saveAll", gesture: "Ctrl+Shift+S"),
             Separator(),
             Item("menu.file.items.exit")),

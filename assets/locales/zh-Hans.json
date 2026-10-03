@@ -16,6 +16,7 @@
         "items": {
           "newProject": "新建项目…",
           "openProject": "打开项目…",
+          "openFile": "打开文件…",
           "closeProject": "关闭项目",
           "recent": "最近打开",
           "save": "保存",
@@ -250,6 +251,10 @@
       "categoryLanguage": "语言服务",
       "categoryGeneral": "其他",
       "missingSectionTitle": "还缺少这些必需工具",
+      "highlightTitle": "语法高亮自检",
+      "highlightSummary": "{0}/{1} 种语言的高亮规则在样本上命中了着色区段。",
+      "highlightOk": "命中 {0} 个着色区段",
+      "highlightBroken": "规则未命中（该语言会显示为纯文本）",
       "explainTitle": "为什么需要这些工具",
       "explainBody": "MetalForge 不随附编译器、模拟器与烧录工具，也不修改系统 PATH。它只负责探测、校验与调用；缺失时给出获取指引。"
     },

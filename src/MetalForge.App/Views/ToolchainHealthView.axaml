@@ -67,6 +67,22 @@
         <TextBlock Classes="subheading" Text="{Binding ExplainTitle}" />
         <TextBlock Classes="body" Text="{Binding ExplainBody}" />
       </StackPanel>
+
+      <!-- 语法高亮自检：让用户直接看到 IDE 自身能力是否可用，而不是只信文档 -->
+      <StackPanel Spacing="6" Margin="0,8,0,0">
+        <TextBlock Classes="subheading" Text="{Binding HighlightTitle}" />
+        <TextBlock Classes="body" Text="{Binding HighlightSummary}" />
+        <ItemsControl ItemsSource="{Binding HighlightStatuses}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:HighlightStatusViewModel">
+              <Grid ColumnDefinitions="220,*" Margin="0,0,0,4">
+                <TextBlock Grid.Column="0" Classes="status-value" Text="{Binding LanguageName}" />
+                <TextBlock Grid.Column="1" Classes="body" Text="{Binding StatusText}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 </UserControl>
