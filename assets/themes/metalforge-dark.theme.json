@@ -47,17 +47,17 @@
     "convertTabsToSpaces": true
   },
   "syntax": {
-    "comment": "#6E7A85",
-    "string": "#B8C99A",
-    "number": "#D9B48F",
-    "keyword": "#9DB8D8",
-    "instruction": "#8FB4D9",
-    "register": "#8FC7C7",
-    "directive": "#C9A0D0",
-    "label": "#E0B080",
-    "function": "#C0A8E0",
-    "variable": "#8FC7C7",
-    "preprocessor": "#A0A8B0"
+    "comment": "#6A9955",
+    "string": "#CE9178",
+    "number": "#B5CEA8",
+    "keyword": "#569CD6",
+    "instruction": "#569CD6",
+    "register": "#4EC9B0",
+    "directive": "#C586C0",
+    "label": "#DCDCAA",
+    "function": "#DCDCAA",
+    "variable": "#9CDCFE",
+    "preprocessor": "#6A9955"
   },
   "terminal": {
     "fontFamily": "Cascadia Mono, Consolas, monospace",

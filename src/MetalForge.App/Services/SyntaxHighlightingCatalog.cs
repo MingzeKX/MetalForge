@@ -317,7 +317,7 @@ public sealed class SyntaxHighlightingCatalog
           <Color name="Comment" foreground="{Comment}" />
           <Color name="String" foreground="{String}" />
           <Color name="Number" foreground="{Number}" />
-          <Color name="Instruction" foreground="{Instruction}" fontWeight="bold" />
+          <Color name="Instruction" foreground="{Instruction}" />
           <Color name="Register" foreground="{Register}" />
           <Color name="Directive" foreground="{Directive}" />
           <Color name="Label" foreground="{Label}" fontWeight="bold" />
@@ -383,7 +383,7 @@ public sealed class SyntaxHighlightingCatalog
           <Color name="Comment" foreground="{Comment}" />
           <Color name="String" foreground="{String}" />
           <Color name="Number" foreground="{Number}" />
-          <Color name="Instruction" foreground="{Instruction}" fontWeight="bold" />
+          <Color name="Instruction" foreground="{Instruction}" />
           <Color name="Register" foreground="{Register}" />
           <Color name="Directive" foreground="{Directive}" />
           <Color name="Label" foreground="{Label}" fontWeight="bold" />
@@ -430,7 +430,7 @@ public sealed class SyntaxHighlightingCatalog
           <Color name="Comment" foreground="{Comment}" />
           <Color name="String" foreground="{String}" />
           <Color name="Number" foreground="{Number}" />
-          <Color name="Keyword" foreground="{Keyword}" fontWeight="bold" />
+          <Color name="Keyword" foreground="{Keyword}" />
           <Color name="Function" foreground="{Function}" />
           <Color name="Variable" foreground="{Variable}" />
           <RuleSet>
