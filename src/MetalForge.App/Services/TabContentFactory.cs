@@ -17,6 +17,7 @@ public sealed class TabContentFactory : ITabContentFactory
     private readonly Func<ToolchainHealthViewModel> _toolchainFactory;
     private readonly Func<AboutViewModel> _aboutFactory;
     private readonly Func<SettingsViewModel> _settingsFactory;
+    private readonly Func<EditorViewModel> _editorFactory;
 
     /// <summary>
     /// 按标签页 id 缓存的 **ViewModel**（不是控件）。
@@ -33,19 +34,22 @@ public sealed class TabContentFactory : ITabContentFactory
         Func<WelcomeViewModel> welcomeFactory,
         Func<ToolchainHealthViewModel> toolchainFactory,
         Func<AboutViewModel> aboutFactory,
-        Func<SettingsViewModel> settingsFactory)
+        Func<SettingsViewModel> settingsFactory,
+        Func<EditorViewModel> editorFactory)
     {
         ArgumentNullException.ThrowIfNull(localize);
         ArgumentNullException.ThrowIfNull(welcomeFactory);
         ArgumentNullException.ThrowIfNull(toolchainFactory);
         ArgumentNullException.ThrowIfNull(aboutFactory);
         ArgumentNullException.ThrowIfNull(settingsFactory);
+        ArgumentNullException.ThrowIfNull(editorFactory);
 
         _localize = localize;
         _welcomeFactory = welcomeFactory;
         _toolchainFactory = toolchainFactory;
         _aboutFactory = aboutFactory;
         _settingsFactory = settingsFactory;
+        _editorFactory = editorFactory;
     }
 
     /// <summary>已经创建过的 ViewModel 数量（诊断用）。</summary>
@@ -68,8 +72,33 @@ public sealed class TabContentFactory : ITabContentFactory
             "toolchainHealth" => new Views.ToolchainHealthView { DataContext = ViewModelFor(descriptor, _toolchainFactory) },
             "about" => new Views.AboutView { DataContext = ViewModelFor(descriptor, _aboutFactory) },
             "settings" => new Views.SettingsView { DataContext = ViewModelFor(descriptor, _settingsFactory) },
+            "codeEditor" => CreateEditorView(descriptor),
             _ => BuildPlaceholder(descriptor),
         };
+    }
+
+    /// <summary>
+    /// 代码编辑器标签页。
+    /// 没有打开的文件时也给出一块可用的编辑器（而不是占位视图），
+    /// 否则后续"新建文件 / 打开文件"没有落点。
+    /// </summary>
+    private Control CreateEditorView(Core.Layout.TabDescriptor descriptor)
+    {
+        var editor = ViewModelFor(descriptor, _editorFactory);
+
+        if (editor.ActiveDocument is null)
+        {
+            var untitled = new EditorDocumentViewModel(
+                filePath: null,
+                content: string.Empty,
+                highlighting: null,
+                localize: _localize);
+
+            editor.Documents.Add(untitled);
+            editor.ActiveDocument = untitled;
+        }
+
+        return new Views.EditorView { DataContext = editor.ActiveDocument };
     }
 
     /// <summary>取（或首次创建）该标签页的 ViewModel。</summary>

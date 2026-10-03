@@ -52,6 +52,9 @@ internal static partial class ApplicationLog
     [LoggerMessage(EventId = 1302, Level = LogLevel.Error, Message = "工具清单为空：assets/targets/tools.json 无法读取或没有有效条目，工具链健康检查将无内容可显示。")]
     public static partial void ToolchainCatalogEmpty(ILogger logger);
 
+    [LoggerMessage(EventId = 1400, Level = LogLevel.Warning, Message = "语法高亮定义加载失败：{Diagnostic}")]
+    public static partial void SyntaxHighlightingFailed(ILogger logger, string diagnostic);
+
     [LoggerMessage(
         EventId = 1202,
         Level = LogLevel.Information,

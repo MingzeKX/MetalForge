@@ -84,7 +84,8 @@
           "changelog": "更新日志",
           "about": "关于 MetalForge"
         }
-      }
+      },
+      "expandToChoose": "展开后选择其中一项"
     },
     "toolbar": {
       "groupProject": "项目",
@@ -166,6 +167,16 @@
     },
     "placeholder": {
       "message": "该标签页尚未实现。它的归属里程碑见下方标记："
+    },
+    "editor": {
+      "untitled": "未命名",
+      "plainText": "纯文本",
+      "fileMissing": "文件不存在（可能已被移动或删除）。",
+      "fileTooLarge": "文件过大（{0:0.0} MB），超过 {1:0} MB 上限。为避免界面卡顿，未加载内容。",
+      "saved": "已保存",
+      "saveFailed": "保存失败",
+      "language": "语言",
+      "caret": "行 {0}，列 {1}"
     },
     "explorer": {
       "empty": "尚未打开项目",

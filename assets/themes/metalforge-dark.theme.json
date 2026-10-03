@@ -46,6 +46,19 @@
     "tabSize": 4,
     "convertTabsToSpaces": true
   },
+  "syntax": {
+    "comment": "#6E7A85",
+    "string": "#B8C99A",
+    "number": "#D9B48F",
+    "keyword": "#9DB8D8",
+    "instruction": "#8FB4D9",
+    "register": "#8FC7C7",
+    "directive": "#C9A0D0",
+    "label": "#E0B080",
+    "function": "#C0A8E0",
+    "variable": "#8FC7C7",
+    "preprocessor": "#A0A8B0"
+  },
   "terminal": {
     "fontFamily": "Cascadia Mono, Consolas, monospace",
     "fontSize": 12,

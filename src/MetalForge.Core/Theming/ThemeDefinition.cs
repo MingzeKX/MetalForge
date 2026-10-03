@@ -148,7 +148,104 @@ public sealed record ThemeTerminalOptions
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 }
 
-/// <summary>一个完整主题：元信息 + 调色板 + 度量 + 编辑器/终端参数。</summary>
+/// <summary>
+/// 编辑器里各类语法元素的颜色角色。
+///
+/// 为什么必须属于主题：语法高亮颜色是最显眼的视觉参数之一；写死在代码里，
+/// 用户换主题时编辑器会保持另一套配色。XSHD 只接受具体颜色值、不支持主题令牌，
+/// 因此做法是"由主题生成 XSHD"，而不是"在 XSHD 里写死颜色"。
+/// </summary>
+public sealed record ThemeSyntaxColors
+{
+    public string? Comment { get; init; }
+
+    /// <summary>
+    /// 字符串字面量的配色。
+    ///
+    /// 命名刻意保留 <c>String</c>：它同时是 JSON 的 <c>syntax.string</c> 键、
+    /// 也是 XSHD 里 <c>&lt;Color name="String"&gt;</c> 的角色名。改名的代价是
+    /// 主题文件与模板都要跟着改，而收益只是让分析器闭嘴 —— 不值得。
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Naming",
+        "CA1720:Identifier contains type name",
+        Justification = "角色名必须与 JSON 键 syntax.string 及 XSHD 的 Color name=\"String\" 保持一致。")]
+    public string? String { get; init; }
+
+    public string? Number { get; init; }
+    public string? Keyword { get; init; }
+    public string? Instruction { get; init; }
+    public string? Register { get; init; }
+    public string? Directive { get; init; }
+    public string? Label { get; init; }
+    public string? Function { get; init; }
+    public string? Variable { get; init; }
+    public string? Preprocessor { get; init; }
+
+    /// <summary>按角色名取值。</summary>
+    public string? this[string role] => role switch
+    {
+        nameof(Comment) => Comment,
+        nameof(String) => String,
+        nameof(Number) => Number,
+        nameof(Keyword) => Keyword,
+        nameof(Instruction) => Instruction,
+        nameof(Register) => Register,
+        nameof(Directive) => Directive,
+        nameof(Label) => Label,
+        nameof(Function) => Function,
+        nameof(Variable) => Variable,
+        nameof(Preprocessor) => Preprocessor,
+        _ => null,
+    };
+
+    /// <summary>全部角色名。</summary>
+    public static IReadOnlyList<string> Roles { get; } =
+    [
+        nameof(Comment), nameof(String), nameof(Number), nameof(Keyword), nameof(Instruction),
+        nameof(Register), nameof(Directive), nameof(Label), nameof(Function), nameof(Variable),
+        nameof(Preprocessor),
+    ];
+
+    /// <summary>缺失（null）的角色，用于诊断"主题不完整"。</summary>
+    public IReadOnlyList<string> MissingRoles() => [.. Roles.Where(role => this[role] is null)];
+
+    /// <summary>用另一个配色中非空的角色覆盖本配色。</summary>
+    public ThemeSyntaxColors OverlayWith(ThemeSyntaxColors overlay)
+    {
+        ArgumentNullException.ThrowIfNull(overlay);
+
+        var result = this;
+        foreach (var role in Roles)
+        {
+            if (overlay[role] is { Length: > 0 } value)
+            {
+                result = result.WithRole(role, value);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>按角色名设置颜色。</summary>
+    public ThemeSyntaxColors WithRole(string role, string value) => role switch
+    {
+        nameof(Comment) => this with { Comment = value },
+        nameof(String) => this with { String = value },
+        nameof(Number) => this with { Number = value },
+        nameof(Keyword) => this with { Keyword = value },
+        nameof(Instruction) => this with { Instruction = value },
+        nameof(Register) => this with { Register = value },
+        nameof(Directive) => this with { Directive = value },
+        nameof(Label) => this with { Label = value },
+        nameof(Function) => this with { Function = value },
+        nameof(Variable) => this with { Variable = value },
+        nameof(Preprocessor) => this with { Preprocessor = value },
+        _ => this,
+    };
+}
+
+/// <summary>一个完整主题：元信息 + 调色板 + 度量 + 编辑器/终端/语法配色。</summary>
 public sealed record ThemeDefinition
 {
     public string Id { get; init; } = "metalforge-dark";
@@ -160,6 +257,7 @@ public sealed record ThemeDefinition
     public ThemeMetrics Metrics { get; init; } = new();
     public ThemeEditorOptions Editor { get; init; } = new();
     public ThemeTerminalOptions Terminal { get; init; } = new();
+    public ThemeSyntaxColors Syntax { get; init; } = new();
 
     /// <summary>把 <paramref name="child"/> 中"已显式设置"的字段覆盖到本主题之上（用于 <c>extends</c> 派生）。</summary>
     public ThemeDefinition WithOverlay(ThemeDefinition child)
@@ -174,6 +272,7 @@ public sealed record ThemeDefinition
             Extends = child.Extends,
             // 子主题中为 null 的颜色键保留父主题的值。
             Palette = Palette.OverlayWith(child.Palette),
+            Syntax = Syntax.OverlayWith(child.Syntax),
             Metrics = child.Metrics,
             Editor = child.Editor,
             Terminal = new ThemeTerminalOptions

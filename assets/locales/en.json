@@ -84,7 +84,8 @@
           "changelog": "Changelog",
           "about": "About MetalForge"
         }
-      }
+      },
+      "expandToChoose": "Expand and pick one of the entries"
     },
     "toolbar": {
       "groupProject": "Project",
@@ -166,6 +167,16 @@
     },
     "placeholder": {
       "message": "This tab is not implemented yet. Its target milestone is shown below:"
+    },
+    "editor": {
+      "untitled": "Untitled",
+      "plainText": "Plain text",
+      "fileMissing": "The file does not exist (it may have been moved or deleted).",
+      "fileTooLarge": "File is too large ({0:0.0} MB); the limit is {1:0} MB. Contents were not loaded to keep the UI responsive.",
+      "saved": "Saved",
+      "saveFailed": "Save failed",
+      "language": "Language",
+      "caret": "Line {0}, Column {1}"
     },
     "explorer": {
       "empty": "No project open",

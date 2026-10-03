@@ -83,6 +83,28 @@ internal static class Program
         services.AddSingleton<AboutViewModel>();
         services.AddSingleton<SettingsViewModel>();
 
+        // 语法高亮目录：通用语言用 AvaloniaEdit 的内置定义，
+        // NASM/GAS/链接脚本/Makefile 等 OSDev 常用格式由本项目提供（内置里没有）。
+        // 模板里的颜色角色由当前主题填充 —— 因此它的构造依赖配置服务。
+        services.AddSingleton(provider =>
+        {
+            var theme = provider.GetRequiredService<IConfigurationService>().Current.Theme;
+            var catalog = new SyntaxHighlightingCatalog(theme.Syntax);
+            catalog.RegisterAll();
+
+            var logger = provider.GetRequiredService<ILogger<SyntaxHighlightingCatalog>>();
+            foreach (var diagnostic in catalog.Diagnostics)
+            {
+                ApplicationLog.SyntaxHighlightingFailed(logger, diagnostic.ToString());
+            }
+
+            return catalog;
+        });
+
+        services.AddSingleton<EditorViewModel>(provider => new EditorViewModel(
+            provider.GetRequiredService<ILocalizationService>(),
+            filePath => provider.GetRequiredService<SyntaxHighlightingCatalog>().FindForFile(filePath)));
+
         services.AddSingleton<ToolchainHealthViewModel>(provider => new ToolchainHealthViewModel(
             provider.GetRequiredService<IToolLocator>(),
             key => provider.GetRequiredService<ILocalizationService>()[key],
@@ -93,7 +115,8 @@ internal static class Program
             provider.GetRequiredService<WelcomeViewModel>,
             provider.GetRequiredService<ToolchainHealthViewModel>,
             provider.GetRequiredService<AboutViewModel>,
-            provider.GetRequiredService<SettingsViewModel>));
+            provider.GetRequiredService<SettingsViewModel>,
+            provider.GetRequiredService<EditorViewModel>));
 
         services.AddSingleton(provider =>
         {

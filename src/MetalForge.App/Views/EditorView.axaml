@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             xmlns:avalonedit="using:AvaloniaEdit"
+             x:Class="MetalForge.App.Views.EditorView"
+             x:DataType="vm:EditorDocumentViewModel">
+  <DockPanel LastChildFill="True">
+    <!-- 文档提示条：仅在加载失败或文件过大等情况下显示 -->
+    <Border DockPanel.Dock="Top"
+            Classes="card"
+            Margin="4,4,4,0"
+            IsVisible="{Binding StatusMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+      <TextBlock Classes="status-warn" TextWrapping="Wrap" Text="{Binding StatusMessage}" />
+    </Border>
+
+    <!-- 语言与光标位置 -->
+    <Border DockPanel.Dock="Bottom" Classes="app-statusbar" Padding="4,2">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <TextBlock Grid.Column="0" Classes="status-label" Text="{Binding LanguageName}" />
+        <TextBlock Grid.Column="2" Classes="status-label" Text="{Binding CaretText}" />
+      </Grid>
+    </Border>
+
+    <avalonedit:TextEditor x:Name="textEditor"
+                           Margin="4"
+                           ShowLineNumbers="True"
+                           FontFamily="{DynamicResource MfEditorFontFamily}"
+                           FontSize="{DynamicResource MfEditorFontSize}"
+                           WordWrap="False"
+                           IsReadOnly="{Binding IsReadOnly}"
+                           HorizontalScrollBarVisibility="Auto"
+                           VerticalScrollBarVisibility="Auto" />
+  </DockPanel>
+</UserControl>

@@ -445,11 +445,20 @@ public sealed partial class ShellViewModel : ObservableObject
         Children = children,
     };
 
+    /// <summary>
+    /// 子菜单容器（"布局预设"、"配色主题"…）。
+    ///
+    /// 它是可展开的容器，本身没有动作，因此必须**禁用**自身：
+    /// 若标记为可用却点不出东西，用户会以为界面坏了。
+    /// 用户通过展开后的子项来操作。
+    /// </summary>
     private CommandItemViewModel SubMenu(string titleKey, IReadOnlyList<CommandItemViewModel> children) => new()
     {
         CommandId = titleKey,
         Label = _localization[titleKey],
         Children = children,
+        IsEnabled = false,
+        DisabledReason = _localization["menu.expandToChoose"],
     };
 
     private CommandItemViewModel Item(
