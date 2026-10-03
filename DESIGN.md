@@ -662,17 +662,68 @@ public interface IAiAgentService
 
 **每个里程碑结束必须停下来交给用户 review。** 每个原子单元完成即提交（Conventional Commits）。
 
-### M0 — 规划与仓库基建（本次会话）
+### M0 — 规划与仓库基建（已完成）
 产出：`DESIGN.md`、`DEPENDENCIES.md`、`docs/adr/0001-0006`、`.gitignore`、`Directory.Build.props`、`Directory.Packages.props`、解决方案骨架（可 `dotnet build` 通过的空分层工程）、首次提交 + `v0.0.1` tag。
 验收：`dotnet build` 成功；分层约束（Core 不引用 Avalonia）有测试强制。
 
-### M1 — 外壳与配置系统（P0 骨架）
-产出：经典 IDE 布局、主题/布局 JSON 驱动、三级配置 + Schema 校验 + 热重载、关于/许可/更新日志/贡献者对话框、启动画面、项目打开/新建最小版本、状态栏、日志面板、i18n 骨架、G-01 工具链健康面板（只读探测）。
-验收：改主题 JSON 立即换肤；改 `app.json` 立即改标题与关于信息；无硬编码颜色（lint 通过）；启动 < 2s。
+### M1 — 外壳与配置系统（已完成，验收见 `docs/manual-verification/M1.md`）
+产出：经典 IDE 布局、主题/布局 JSON 驱动、三级配置 + Schema 校验 + 热重载、关于/许可/更新日志/贡献者视图、启动画面、窗口图标与几何记忆、项目系统（`metalforge.json` + 文件树）、目标矩阵（架构 × 引导方式）、代码编辑器（AvaloniaEdit）、i18n、G-01 工具链健康面板。
+**提前完成**：M3 计划的自研 XSHD 高亮（NASM/GAS/LD/Makefile/DTS/INF/DEC/DSC/GRUB）已实现，且配色由主题生成。
+验收：改主题 JSON 立即换肤；改 `app.json` 立即改标题与关于信息；无硬编码颜色（lint 通过）；打开项目、双击文件、编辑器正确显示内容与高亮；窗口位置被记住。
 
 ### M2 — 构建与运行闭环（第一个"真的能跑"的里程碑）
-产出：`metalforge.json` 项目模型、构建引擎（GCC/Clang/NASM/CMake）+ 诊断解析、产物校验器（ELF/PE）、QEMU 参数生成 + 固件解析、串口终端、构建/运行面板、脚本钩子。
+产出：构建计划（`BuildPlan`：语言检测 + 架构必需选项 + 工具链选择）、CMake 工程与工具链文件生成、构建引擎（CMake/Ninja/Make/GCC/Clang/NASM）+ 诊断解析、产物校验器（ELF/PE）、ISO9660 + El Torito 自研实现、QEMU 参数生成 + 固件解析、串口终端、构建/运行面板、脚本钩子。
 验收：**真实构建并运行一个 x86_64 Multiboot "Hello" 与一个 UEFI `.efi`（需用户机器具备工具链；缺失时走 G-01 引导）**，串口输出可见。
+注意：本机实测**没有任何 OSDev 工具链**，因此本里程碑的验收必须包含
+"工具链缺失时给出可执行的下一步"这一路径，而不仅是成功路径。
+
+### 18.1 M2 构建系统设计
+
+#### 分层与职责
+
+| 组件 | 位置 | 职责 |
+|---|---|---|
+| `BuildPlan` | Core/Build | 由项目配置 + 目标矩阵推出**完整构建方案**：编译/汇编/链接命令、输出路径、必需选项 |
+| `ToolchainResolver` | Core/Build | 由目标架构的三元组在已探测工具中选出实际可执行文件；缺失时报出需要哪一个 |
+| `CMakeProjectWriter` | Core/Build | 生成 `CMakeLists.txt` 与 `cmake/<triple>.toolchain.cmake` |
+| `BuildDiagnosticParser` | Core/Build | 把 GCC/Clang/Ninja/MSVC 输出解析为 `Diagnostic`（文件、行、列、级别、代码） |
+| `IBuildEngine` | Core/Build | 执行构建；产出结构化结果（诊断、产物路径、耗时、退出码） |
+| `ImageBuilder` | Core/Build/Images | ISO9660 + El Torito 生成、EFI 系统分区布局、flat binary 提取 |
+| `RunPlan` | Core/Build | QEMU 参数生成（由引导方式的模板 + 架构 + 项目运行配置合成） |
+
+#### 为什么生成 CMake 而不是自己拼编译命令
+
+两种做法都能用，取舍如下：
+
+- **自己拼命令行**：控制力最强，但对每个目标都要维护一份"编译 → 汇编 → 链接"的流程，
+  且用户无法用熟悉的工具做增量构建、无法接入 IDE 的 CMake 支持。
+- **生成 CMake 工程**：与主流 OSDev 工作流一致（用户能直接 `cmake --build` 复现），
+  增量构建、依赖跟踪、多配置由 CMake 负责。
+
+**决定：生成 CMake 工程**，但把"必需编译选项从哪来"留在我们这边 ——
+架构矩阵里的 `requiredCompilerFlags` 是 OSDev 特有的知识（`-mno-red-zone`、
+`-mgeneral-regs-only`、`-mcmodel=medany`），必须在生成的工程里显式带上。
+生成的工程里会写明每个选项的用途，用户改起来才有依据。
+
+#### 诊断：构建输出必须变成可点击的问题
+
+原始构建输出不是给人看的。`BuildDiagnosticParser` 把常见格式解析成结构化的
+`Diagnostic`（复用配置系统的类型），界面据此提供"双击跳到出错行"。
+
+需要支持的格式（都来自真实工具）：
+
+| 工具 | 格式 |
+|---|---|
+| GCC / Clang | `path:line:col: error: message [-Wflag]` |
+| GCC（无列） | `path:line: error: message` |
+| Ninja | `FAILED: <target>` 以及其后紧跟的工具输出 |
+| ld / lld | `path:(.text+0x1f): undefined reference to 'x'` |
+| NASM | `path:line: error: message` |
+| MSVC（EDK2 场景） | `path(line) : error C1234: message` |
+
+解析必须**容错**：看不懂的行原样进入输出面板，而不是被丢弃。
+一个把"看不懂的行"丢掉的解析器比没有解析器更糟。
+
 
 ### M3 — 调试与语言智能
 产出：clangd LSP（补全/诊断/跳转/switchSourceHeader/格式化）、自研 `.xshd` 高亮（NASM/GAS/LD/Makefile/INF/DEC/DSC/DTS）、GDB MI2 调试器（QEMU gdbstub）、QMP 监视器、符号/map 工具、OpenOCD 集成 + UF2/HEX + 安全写盘护栏。
