@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             x:Class="MetalForge.App.Views.DocumentAreaView"
+             x:DataType="vm:DocumentAreaViewModel">
+  <!--
+    多标签文档区。标签条与选中项来自 DocumentAreaViewModel，内容由代码按选中项创建
+    （控件属于视觉树，不能跨标签页复用；本项目已因缓存控件崩溃过一次）。
+    此前文档区是布局里的固定 TabControl，导致"打开文件"改了 ViewModel 而界面停在欢迎页。
+  -->
+  <Grid RowDefinitions="Auto,*">
+    <TabControl Grid.Row="0"
+                x:Name="documentTabs"
+                Classes="document-tabs"
+                ItemsSource="{Binding Tabs}"
+                SelectedItem="{Binding ActiveTab, Mode=TwoWay}">
+      <TabControl.ItemTemplate>
+        <DataTemplate DataType="vm:WorkspaceTabViewModel">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="{Binding DisplayTitle}" VerticalAlignment="Center" />
+            <Button Classes="tab-close"
+                    Content="✕"
+                    IsVisible="{Binding IsClosable}"
+                    ToolTip.Tip="关闭"
+                    Command="{Binding $parent[UserControl].((vm:DocumentAreaViewModel)DataContext).CloseTabCommand}"
+                    CommandParameter="{Binding}" />
+          </StackPanel>
+        </DataTemplate>
+      </TabControl.ItemTemplate>
+    </TabControl>
+
+    <Border Grid.Row="1" Classes="document-surface">
+      <ContentControl x:Name="documentContentHost" />
+    </Border>
+  </Grid>
+</UserControl>

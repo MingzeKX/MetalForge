@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,7 +14,7 @@ namespace MetalForge.App.ViewModels;
 /// 也不直接读写文件。它回答三个问题：
 ///   1) 当前用哪个布局、哪些主题/语言可选；
 ///   2) 菜单与工具栏该显示什么、哪些命令可用；
-///   3) 文档区里有哪些标签页。
+///   3) 文档区有哪些标签页（委托给 <see cref="DocumentAreaViewModel"/>）。
 /// </summary>
 public sealed partial class ShellViewModel : ObservableObject
 {
@@ -60,31 +59,35 @@ public sealed partial class ShellViewModel : ObservableObject
     [ObservableProperty]
     private bool _showStatusBar = true;
 
-    /// <summary>已打开的文档标签页（M1 只有欢迎页与"关于"）。</summary>
-    public ObservableCollection<DocumentTabViewModel> Documents { get; } = [];
-
+    /// <summary>当前在编辑器里显示的文档（最近一次打开的文件）。</summary>
     [ObservableProperty]
-    private DocumentTabViewModel? _activeDocument;
+    private EditorDocumentViewModel? _activeEditorDocument;
 
     public ShellViewModel(
         IConfigurationService configuration,
         ILocalizationService localization,
         Func<LayoutPreset, Control> layoutFactory,
-        EditorViewModel editor)
+        EditorViewModel editor,
+        DocumentAreaViewModel documentArea)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(localization);
         ArgumentNullException.ThrowIfNull(layoutFactory);
         ArgumentNullException.ThrowIfNull(editor);
+        ArgumentNullException.ThrowIfNull(documentArea);
 
         _configuration = configuration;
         _localization = localization;
         _layoutFactory = layoutFactory;
         _editor = editor;
+        DocumentArea = documentArea;
 
         _localization.LanguageChanged += (_, _) => RebuildLocalizedContent();
         _configuration.ConfigurationChanged += (_, _) => RebuildLocalizedContent();
     }
+
+    /// <summary>文档区（多标签编辑器）。它是"已打开的文件"的唯一真相源。</summary>
+    public DocumentAreaViewModel DocumentArea { get; }
 
     /// <summary>当前生效的布局预设。</summary>
     public LayoutPreset CurrentLayout { get; private set; } = new();
@@ -92,11 +95,17 @@ public sealed partial class ShellViewModel : ObservableObject
     /// <summary>可用布局预设。</summary>
     public IReadOnlyList<LayoutPreset> AvailableLayouts => _configuration.AvailableLayouts;
 
-    /// <summary>可用主题。</summary>
+    /// <summary>可选主题。</summary>
     public IReadOnlyList<Core.Theming.ThemeDefinition> AvailableThemes => _configuration.AvailableThemes;
 
-    /// <summary>可用语言。</summary>
+    /// <summary>可选语言。</summary>
     public IReadOnlyList<(string LanguageCode, string DisplayName)> AvailableLanguages => _localization.AvailableLanguages;
+
+    /// <summary>
+    /// "打开文件…"的请求事件。由宿主（窗口）接管：ViewModel 不碰窗口与对话框，
+    /// 这是保持 ViewModel 可单元测试的分界线。
+    /// </summary>
+    public event EventHandler? FileOpenRequested;
 
     /// <summary>按当前配置与语言重建全部界面内容。启动时与配置/语言变化时调用。</summary>
     public void Rebuild(LayoutPreset? layoutOverride = null)
@@ -119,7 +128,7 @@ public sealed partial class ShellViewModel : ObservableObject
         StatusItems = BuildStatusBar(CurrentLayout.StatusBar);
         StatusText = BuildStatusText();
 
-        EnsureWelcomeDocument();
+        DocumentArea.EnsureWelcome();
     }
 
     /// <summary>切换布局预设（菜单"视图 → 布局预设"）。</summary>
@@ -147,25 +156,13 @@ public sealed partial class ShellViewModel : ObservableObject
         _localization.TrySetLanguage(languageCode);
     }
 
-    /// <summary>打开"关于"文档标签页。</summary>
+    /// <summary>打开"关于"。</summary>
     [RelayCommand]
-    public void OpenAbout()
-    {
-        OpenDocument("about", _localization["tab.about"]);
-    }
+    public void OpenAbout() => DocumentArea.OpenContentTab("about", _localization["tab.about"]);
 
-    /// <summary>打开"设置"文档标签页。</summary>
+    /// <summary>打开"设置"。</summary>
     [RelayCommand]
-    public void OpenSettings()
-    {
-        OpenDocument("settings", _localization["tab.settings"]);
-    }
-
-    /// <summary>
-    /// "打开文件…"的请求事件。由宿主（窗口）接管：ViewModel 不碰窗口与对话框，
-    /// 这是保持 Core/ViewModel 可测试的分界线。
-    /// </summary>
-    public event EventHandler? FileOpenRequested;
+    public void OpenSettings() => DocumentArea.OpenContentTab("settings", _localization["tab.settings"]);
 
     /// <summary>保存当前编辑器文档。</summary>
     [RelayCommand]
@@ -177,42 +174,37 @@ public sealed partial class ShellViewModel : ObservableObject
         }
     }
 
-    private void OpenFileRequested() => FileOpenRequested?.Invoke(this, EventArgs.Empty);
+    /// <summary>关闭当前文档标签页。</summary>
+    [RelayCommand]
+    public void CloseActiveDocument()
+    {
+        if (DocumentArea.ActiveTab is { } tab)
+        {
+            DocumentArea.CloseTab(tab);
+        }
+    }
 
     /// <summary>
-    /// 在一个编辑器标签页里打开文件（由宿主提供的对话框选取，或直接给路径）。
-    /// 打开后把文档区切到编辑器标签页，否则用户看不到刚打开的文件。
+    /// 在文档区打开文件：新增（或聚焦）一个编辑器标签页并把选中项切过去，
+    /// 因此用户立刻能看到内容。
     /// </summary>
     public void OpenInEditor(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         var document = _editor.Open(filePath);
-        OpenDocument("editor", _localization["tab.editor"]);
-
-        // 文档区里的编辑器标签页此刻可能显示的是"未命名"文档，
-        // 因此把它的 DataContext 切到刚打开的文件上。
         ActiveEditorDocument = document;
-    }
 
-    /// <summary>当前在编辑器标签页里显示的文档。</summary>
-    [ObservableProperty]
-    private EditorDocumentViewModel? _activeEditorDocument;
+        var tab = DocumentArea.OpenFile(filePath, document);
 
-    /// <summary>关闭一个文档标签页。</summary>
-    [RelayCommand]
-    public void CloseDocument(DocumentTabViewModel document)
-    {
-        ArgumentNullException.ThrowIfNull(document);
-
-        var index = Documents.IndexOf(document);
-        if (index < 0)
+        // 标签页上的"未保存"标记跟随文档状态。
+        document.PropertyChanged += (_, args) =>
         {
-            return;
-        }
-
-        Documents.RemoveAt(index);
-        ActiveDocument = Documents.Count == 0 ? null : Documents[Math.Min(index, Documents.Count - 1)];
+            if (args.PropertyName == nameof(EditorDocumentViewModel.IsDirty))
+            {
+                tab.IsDirty = document.IsDirty;
+            }
+        };
     }
 
     /// <summary>
@@ -231,48 +223,23 @@ public sealed partial class ShellViewModel : ObservableObject
         item.Execute();
     }
 
-    /// <summary>打开（或聚焦）一个文档标签页。</summary>
-    public void OpenDocument(string tabId, string title)
-    {
-        var existing = Documents.FirstOrDefault(document => string.Equals(document.TabId, tabId, StringComparison.OrdinalIgnoreCase));
-        if (existing is not null)
-        {
-            ActiveDocument = existing;
-            return;
-        }
-
-        var document = new DocumentTabViewModel
-        {
-            TabId = tabId,
-            Title = title,
-        };
-
-        Documents.Add(document);
-        ActiveDocument = document;
-    }
-
-    private void EnsureWelcomeDocument()
-    {
-        if (Documents.Count == 0)
-        {
-            OpenDocument("welcome", _localization["tab.welcome"]);
-        }
-        else
-        {
-            ActiveDocument ??= Documents[0];
-        }
-    }
+    private void OpenFileRequested() => FileOpenRequested?.Invoke(this, EventArgs.Empty);
 
     private void RebuildLocalizedContent()
     {
-        var activeTabId = ActiveDocument?.TabId;
-        Rebuild();
-
-        if (activeTabId is not null
-            && Documents.FirstOrDefault(document => string.Equals(document.TabId, activeTabId, StringComparison.OrdinalIgnoreCase)) is { } restored)
+        // 文档区由自己的 ViewModel 管理，重建布局不会丢标签页；只需刷新可本地化的标题。
+        foreach (var tab in DocumentArea.Tabs)
         {
-            ActiveDocument = restored;
+            tab.Title = tab.TabId switch
+            {
+                "welcome" => _localization["tab.welcome"],
+                "about" => _localization["tab.about"],
+                "settings" => _localization["tab.settings"],
+                _ => tab.Title,
+            };
         }
+
+        Rebuild();
     }
 
     private LayoutPreset ResolveStartupLayout()
@@ -309,12 +276,13 @@ public sealed partial class ShellViewModel : ObservableObject
         Menu("menu.file.title",
             Item("menu.file.items.newProject"),
             Item("menu.file.items.openProject"),
-            Item("menu.file.items.openFile", Execute: OpenFileRequested),
+            Item("menu.file.items.openFile", gesture: "Ctrl+O", Execute: OpenFileRequested),
             Item("menu.file.items.closeProject"),
             Separator(),
             Item("menu.file.items.save", gesture: "Ctrl+S", Execute: SaveActiveDocument),
             Item("menu.file.items.saveAll", gesture: "Ctrl+Shift+S"),
             Separator(),
+            Item("menu.file.items.closeDocument", gesture: "Ctrl+W", Execute: CloseActiveDocument),
             Item("menu.file.items.exit")),
 
         Menu("menu.edit.title",
@@ -417,7 +385,7 @@ public sealed partial class ShellViewModel : ObservableObject
                 "status.configuration" => (_localization["status.configuration"], "—", false),
                 "status.toolchain" => (_localization["status.toolchain"], ToolchainSummary(), true),
                 "status.buildState" => (_localization["status.buildState"], _localization["status.buildIdle"], false),
-                "status.cursor" => (_localization["status.cursor"], "—", false),
+                "status.cursor" => (_localization["status.cursor"], ActiveEditorDocument?.CaretText ?? "—", true),
                 "status.problems" => (_localization["status.problems"], _localization["status.noProblems"], true),
                 "status.debugState" => (_localization["status.debugState"], "—", false),
                 "status.currentFrame" => (_localization["status.currentFrame"], "—", false),
@@ -479,7 +447,7 @@ public sealed partial class ShellViewModel : ObservableObject
     };
 
     private void OpenToolchainHealth()
-        => OpenDocument("toolchain.health", _localization["tab.toolchainHealth"]);
+        => DocumentArea.OpenContentTab("toolchain.health", _localization["tab.toolchainHealth"]);
 
     private CommandItemViewModel Menu(string titleKey, params CommandItemViewModel[] children) => new()
     {
@@ -527,16 +495,4 @@ public sealed partial class ShellViewModel : ObservableObject
     };
 
     private static CommandItemViewModel Separator() => new() { IsSeparator = true };
-}
-
-/// <summary>文档区里的一个标签页。</summary>
-public sealed partial class DocumentTabViewModel : ObservableObject
-{
-    public required string TabId { get; init; }
-
-    [ObservableProperty]
-    private string _title = string.Empty;
-
-    [ObservableProperty]
-    private bool _isDirty;
 }

@@ -124,10 +124,24 @@ internal static class Program
             provider.GetRequiredService<SettingsViewModel>,
             provider.GetRequiredService<EditorViewModel>));
 
+        // 文档区：它是"已打开的文件"的唯一真相源，因此必须在布局构建器之前注册。
+        services.AddSingleton<DocumentAreaViewModel>(provider => new DocumentAreaViewModel(
+            provider.GetRequiredService<WelcomeViewModel>,
+            provider.GetRequiredService<ToolchainHealthViewModel>,
+            provider.GetRequiredService<AboutViewModel>,
+            provider.GetRequiredService<SettingsViewModel>,
+            () => provider.GetRequiredService<ShellViewModel>().ActiveEditorDocument,
+            key => provider.GetRequiredService<ILocalizationService>()[key]));
+
         services.AddSingleton(provider =>
         {
             var factory = provider.GetRequiredService<TabContentFactory>();
-            var builder = new LayoutControlBuilder(factory);
+            var documentArea = provider.GetRequiredService<DocumentAreaViewModel>();
+
+            var builder = new LayoutControlBuilder(
+                factory,
+                () => new Views.DocumentAreaView { DataContext = documentArea });
+
             return (Func<LayoutPreset, Control>)(preset => builder.Build(preset.Root));
         });
 
@@ -135,7 +149,8 @@ internal static class Program
             provider.GetRequiredService<IConfigurationService>(),
             provider.GetRequiredService<ILocalizationService>(),
             provider.GetRequiredService<Func<LayoutPreset, Control>>(),
-            provider.GetRequiredService<EditorViewModel>()));
+            provider.GetRequiredService<EditorViewModel>(),
+            provider.GetRequiredService<DocumentAreaViewModel>()));
 
         return services.BuildServiceProvider(new ServiceProviderOptions
         {

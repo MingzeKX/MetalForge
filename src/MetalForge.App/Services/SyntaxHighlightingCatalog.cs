@@ -122,6 +122,13 @@ public sealed class SyntaxHighlightingCatalog
     };
 
     /// <summary>注册全部自研高亮定义。重复调用无副作用。</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Design",
+        "CA1031:Do not catch general exception types",
+        Justification = "语法高亮是增强能力，其失败绝不能拖垮整个 IDE。"
+            + "本项目第一版只捕获预期异常，结果 XSHD 正则非法时抛出的 HighlightingDefinitionInvalidException "
+            + "冒到 UI 线程导致应用启动即崩溃。这里刻意捕获全部异常并转为诊断，"
+            + "再逐条按需收窄（见单元测试对具体异常类型的覆盖）。")]
     public void RegisterAll()
     {
         foreach (var (name, template) in EnumerateTemplates())
@@ -139,13 +146,18 @@ public sealed class SyntaxHighlightingCatalog
                 using var xmlReader = System.Xml.XmlReader.Create(reader);
                 _definitions[name] = HighlightingLoader.Load(xmlReader, HighlightingManager.Instance);
             }
-            catch (Exception exception) when (exception is System.Xml.XmlException or InvalidOperationException or ArgumentException)
+            catch (Exception exception)
             {
-                // 高亮定义出错不应该影响打开文件：记录诊断并继续注册其余定义。
+                // 这里刻意捕获所有异常，而不是只捕获预期的几种。
+                //
+                // 原因：本项目第一版只捕获 XmlException/InvalidOperationException/ArgumentException，
+                // 结果 XSHD 里的正则非法时抛出的 HighlightingDefinitionInvalidException
+                // 一路冒到 UI 线程，**应用启动即崩溃**。语法高亮是"锦上添花"的能力，
+                // 它失败绝不能拖垮整个 IDE —— 记录诊断、跳过该定义、继续启动。
                 _diagnostics.Add(new Diagnostic(
                     DiagnosticSeverity.Warning,
                     "MFHL001",
-                    $"语法高亮定义 '{name}' 无法加载：{exception.Message}",
+                    $"语法高亮定义 '{name}' 无法加载：{exception.GetType().Name}: {exception.Message}",
                     Hint: "该语言将退化为纯文本显示；其余高亮不受影响。",
                     Exception: exception));
             }
@@ -194,8 +206,13 @@ public sealed class SyntaxHighlightingCatalog
 
     /// <summary>
     /// 把模板里的 <c>{Role}</c> 占位符替换为当前主题的颜色。
-    /// 缺失角色**不猜测、不回退到写死的颜色**：直接报诊断并跳过该定义，
-    /// 这样"主题漏配"会立刻可见，而不是悄悄用上另一套配色。
+    ///
+    /// 占位符**只匹配 <c>{</c> + 字母开头的标识符 + <c>}</c>**。
+    /// 这样模板里的正则可以直接写单个花括号字面量（例如 Makefile 的
+    /// <c>\$\{[A-Za-z_]...\}</c>），不必为转义发愁 —— 本项目第一版就是因为
+    /// 一个大括号被当成占位符而渲染出 "INVALID"，进而在 XSHD 解析时崩溃。
+    ///
+    /// 缺失角色**不猜测、不回退到写死的颜色**：报诊断并跳过，让"主题漏配"立刻可见。
     /// </summary>
     private string RenderTemplate(string name, string template, ThemeSyntaxColors syntax)
     {
@@ -219,14 +236,22 @@ public sealed class SyntaxHighlightingCatalog
                 break;
             }
 
-            builder.Append(template, index, open - index);
             var role = template[(open + 1)..close];
+
+            // 只把 `{Identifier}` 形态当作占位符；其余情况原样保留（它们是正则的一部分）。
+            if (!IsPlaceholderName(role))
+            {
+                builder.Append(template, index, close - index + 1);
+                index = close + 1;
+                continue;
+            }
+
+            builder.Append(template, index, open - index);
             var color = syntax[role];
 
             if (color is null)
             {
                 missing.Add(role);
-                builder.Append("INVALID");
             }
             else
             {
@@ -246,6 +271,25 @@ public sealed class SyntaxHighlightingCatalog
         }
 
         return builder.ToString();
+    }
+
+    /// <summary>占位符名必须是字母开头的标识符（camelCase 允许），且是已知角色。</summary>
+    private static bool IsPlaceholderName(string candidate)
+    {
+        if (candidate.Length == 0 || !char.IsAsciiLetter(candidate[0]))
+        {
+            return false;
+        }
+
+        foreach (var character in candidate)
+        {
+            if (!char.IsAsciiLetterOrDigit(character))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>全部模板：名称 → 含 <c>{Role}</c> 占位符的 XSHD 文本。</summary>

@@ -42,7 +42,18 @@ public sealed class ShellCompositionTests : IDisposable
     private ShellViewModel CreateShell()
         // 布局工厂返回 null 控件即可：本测试只关心菜单/工具栏/状态栏的数据，
         // 不构建视觉树（那需要 Avalonia 平台初始化）。
-        => new(_configuration, _localization, _ => null!, new EditorViewModel(_localization, _ => null));
+        => new(
+            _configuration,
+            _localization,
+            _ => null!,
+            new EditorViewModel(_localization, _ => null),
+            new DocumentAreaViewModel(
+                () => new WelcomeViewModel(_localization),
+                () => new ToolchainHealthViewModel(new EmptyToolLocator(), key => _localization[key], (key, _) => _localization[key]),
+                () => new AboutViewModel(_localization),
+                () => new SettingsViewModel(_configuration, _localization),
+                () => null,
+                key => _localization[key]));
 
     [Fact]
     public void Rebuild_ProducesMenuToolbarAndStatusEntries()
@@ -209,9 +220,9 @@ public sealed class ShellCompositionTests : IDisposable
         var shell = CreateShell();
         shell.Rebuild();
 
-        Assert.NotEmpty(shell.Documents);
-        Assert.NotNull(shell.ActiveDocument);
-        Assert.Equal("welcome", shell.Documents[0].TabId);
+        Assert.NotEmpty(shell.DocumentArea.Tabs);
+        Assert.NotNull(shell.DocumentArea.ActiveTab);
+        Assert.Equal("welcome", shell.DocumentArea.Tabs[0].TabId);
     }
 
     [Fact]
@@ -283,4 +294,37 @@ public sealed class ShellCompositionTests : IDisposable
             // 同上
         }
     }
+}
+
+/// <summary>
+/// 测试用的空工具链探测器：不探测任何工具，只满足构造依赖。
+/// 界面装配测试关心的是菜单/工具栏/文档区，不是探测结果。
+/// </summary>
+internal sealed class EmptyToolLocator : MetalForge.Core.Toolchains.IToolLocator
+{
+    public IReadOnlyList<MetalForge.Core.Toolchains.ToolRequirement> Requirements => [];
+
+    public MetalForge.Core.Toolchains.ToolHealthReport? LastReport => null;
+
+    public void Invalidate()
+    {
+    }
+
+    public void Dispose()
+    {
+    }
+
+    public Task<MetalForge.Core.Toolchains.ToolHealthReport> CheckHealthAsync(CancellationToken cancellationToken)
+        => Task.FromResult(new MetalForge.Core.Toolchains.ToolHealthReport
+        {
+            Tools = [],
+            Readiness = MetalForge.Core.Toolchains.ToolchainReadiness.Ready,
+            CheckedAt = DateTimeOffset.Now,
+            Duration = TimeSpan.Zero,
+        });
+
+    public Task<IReadOnlyList<MetalForge.Core.Toolchains.ToolInstance>> EnumerateCandidatesAsync(
+        MetalForge.Core.Toolchains.ToolRequirement requirement,
+        CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<MetalForge.Core.Toolchains.ToolInstance>>([]);
 }

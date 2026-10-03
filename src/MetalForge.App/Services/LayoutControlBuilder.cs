@@ -43,11 +43,14 @@ public sealed class LayoutControlBuilder
     public const string PlaceholderClass = "panel-placeholder";
 
     private readonly ITabContentFactory _contentFactory;
+    private readonly Func<Control> _documentAreaFactory;
 
-    public LayoutControlBuilder(ITabContentFactory contentFactory)
+    public LayoutControlBuilder(ITabContentFactory contentFactory, Func<Control> documentAreaFactory)
     {
         ArgumentNullException.ThrowIfNull(contentFactory);
+        ArgumentNullException.ThrowIfNull(documentAreaFactory);
         _contentFactory = contentFactory;
+        _documentAreaFactory = documentAreaFactory;
     }
 
     /// <summary>构建整棵布局树。根节点的比例设置无效（它没有父容器）。</summary>
@@ -202,26 +205,10 @@ public sealed class LayoutControlBuilder
 
     private Control BuildDocumentArea(LayoutNode node)
     {
-        var tabs = new TabControl
-        {
-            Padding = default,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch,
-        };
-
-        tabs.Classes.Add("document-area");
-
-        foreach (var tabId in node.InitialTabs)
-        {
-            tabs.Items.Add(CreateTabItem(tabId));
-        }
-
-        if (tabs.Items.Count == 0)
-        {
-            tabs.Items.Add(CreatePlaceholder(null));
-        }
-
-        return tabs;
+        // 文档区不再是一个固定的 TabControl：它必须由"已打开的文件"驱动。
+        // 此前这里的固定标签页导致"打开文件"改了 ViewModel 而界面毫无变化
+        // —— 功能实现了却看不见。现在布局只给出宿主控件，内容归 DocumentAreaViewModel 管。
+        return _documentAreaFactory();
     }
 
     private TabItem CreateTabItem(string tabId)

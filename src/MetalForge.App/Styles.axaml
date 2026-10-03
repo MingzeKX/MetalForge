@@ -29,31 +29,94 @@
 
   <Style Selector="TabControl.tool-panel > TabItem">
     <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
-    <Setter Property="Padding" Value="{DynamicResource MfSpace2}" />
+    <Setter Property="Padding" Value="8,5,8,6" />
     <Setter Property="MinHeight" Value="{DynamicResource MfTabHeight}" />
     <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
 
   <Style Selector="TabControl.tool-panel > TabItem:selected">
     <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
   </Style>
 
-  <!-- 文档区：标签条更高、更醒目，因为它是主要工作区 -->
-  <Style Selector="TabControl.document-area">
-    <Setter Property="Background" Value="{DynamicResource MfSurface}" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="0" />
+  <!--
+    文档区的标签条：把 TabControl 的模板换掉，只保留标签条与选中指示。
+    默认模板里的 PART_SelectedContentHost 会覆盖在其下方的内容宿主之上，
+    导致"内容创建正确、尺寸正常，但屏幕上什么都看不到"（本项目真实踩过）。
+    文档区的内容由 DocumentAreaView 自己按选中项创建，因此这里不需要内容宿主。
+  -->
+  <Style Selector="TabControl.document-tabs">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <ItemsPresenter Name="PART_ItemsPresenter"
+                          ItemsPanel="{TemplateBinding ItemsPanel}" />
+        </ScrollViewer>
+      </ControlTemplate>
+    </Setter>
   </Style>
 
-  <Style Selector="TabControl.document-area > TabItem">
+  <Style Selector="TabControl.document-tabs > TabItem">
     <Setter Property="FontSize" Value="{DynamicResource MfFontSizeBase}" />
-    <Setter Property="Padding" Value="{DynamicResource MfSpace2}" />
+    <!--
+      垂直内边距要足够：Fluent 的选中指示条贴在 TabItem 底边，
+      若内容几乎填满，指示条就会紧贴文件名（用户反馈"下划线太高、贴到文件名下面"）。
+      这里给上下各留出间距，让指示条落在标签下方的空白处。
+    -->
+    <Setter Property="Padding" Value="10,6,6,8" />
     <Setter Property="MinHeight" Value="{DynamicResource MfTabHeight}" />
     <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="TabControl.document-area > TabItem:selected">
+  <Style Selector="TabControl.document-tabs > TabItem:selected">
     <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+  </Style>
+
+  <!-- 文档内容区背景：靠明度与圆角和工具面板区分 -->
+  <Style Selector="Border.document-surface">
+    <Setter Property="Background" Value="{DynamicResource MfSurface}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadius}" />
+  </Style>
+
+  <!--
+    标签页上的关闭按钮。默认 Fluent 按钮在这里是一个"圆角大按钮"（带背景与焦点环），
+    与 IDE 惯例不符。这里做成 16x16 的紧凑 ✕：无背景、无边框、无焦点环，
+    仅在悬停时给一点底色。
+  -->
+  <Style Selector="Button.tab-close">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadiusSmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.tab-close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource MfSurfaceRaised}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.tab-close:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource MfAccentPressed}" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.tab-close:focus /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.tab-close:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource MfAccent}" />
+    <Setter Property="BorderThickness" Value="1" />
   </Style>
 
   <!-- 占位内容：颜色使用 muted 而不是错误色 —— 未实现不是错误 -->

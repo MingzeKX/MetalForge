@@ -55,6 +55,12 @@ internal static partial class ApplicationLog
     [LoggerMessage(EventId = 1400, Level = LogLevel.Warning, Message = "语法高亮定义加载失败：{Diagnostic}")]
     public static partial void SyntaxHighlightingFailed(ILogger logger, string diagnostic);
 
+    [LoggerMessage(EventId = 1500, Level = LogLevel.Information, Message = "已按命令行参数打开文件：{FilePath}")]
+    public static partial void StartupFileOpened(ILogger logger, string filePath);
+
+    [LoggerMessage(EventId = 1501, Level = LogLevel.Warning, Message = "命令行指定的文件无法打开：{FilePath}")]
+    public static partial void StartupFileFailed(ILogger logger, string filePath, Exception exception);
+
     [LoggerMessage(
         EventId = 1202,
         Level = LogLevel.Information,

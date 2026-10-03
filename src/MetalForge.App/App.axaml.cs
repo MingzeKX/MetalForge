@@ -48,10 +48,40 @@ public partial class App : Application
             _shell.Rebuild();
 
             desktop.MainWindow = CreateMainWindow(_shell);
+
+            // 命令行传入文件路径时直接在编辑器里打开。
+            // 这既是"用 MetalForge 打开"文件关联的基础，也让界面能在无人操作的情况下被验证。
+            OpenStartupFile(desktop.Args);
+
             desktop.Exit += OnDesktopExit;
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>把命令行里的第一个存在的文件路径交给编辑器。</summary>
+    private void OpenStartupFile(string[]? args)
+    {
+        var candidate = args?.FirstOrDefault(argument =>
+            !string.IsNullOrWhiteSpace(argument)
+            && !argument.StartsWith('-')
+            && File.Exists(argument));
+
+        if (candidate is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _shell.OpenInEditor(candidate);
+            ApplicationLog.StartupFileOpened(_logger, candidate);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            // 打开失败不应该阻止应用启动：编辑器里会显示原因（见 EditorDocumentViewModel.Load）。
+            ApplicationLog.StartupFileFailed(_logger, candidate, exception);
+        }
     }
 
     private void LoadConfiguration()
