@@ -6,8 +6,8 @@ namespace MetalForge.App.Services;
 /// <summary>
 /// 标签页内容的工厂：把布局里的标签页 id 变成真实控件。
 ///
-/// 未实现的标签页返回由 <see cref="PlaceholderViewModel"/> 驱动的占位视图，
-/// 并标出它的目标里程碑。这里是"配置驱动"与"代码实现"的接缝，
+/// 当前条件下没有内容的面板返回空状态视图，说明这个面板用来做什么、
+/// 为什么现在是空的、下一步做什么。这里是"配置驱动"与"代码实现"的接缝，
 /// 因此全部判断集中在这一个类里。
 /// </summary>
 public sealed class TabContentFactory : ITabContentFactory
@@ -78,7 +78,7 @@ public sealed class TabContentFactory : ITabContentFactory
             "settings" => new Views.SettingsView { DataContext = ViewModelFor(descriptor, _settingsFactory) },
             "projectFiles" => CreateProjectExplorerView(descriptor),
             "codeEditor" => CreateEditorView(descriptor),
-            _ => BuildPlaceholder(descriptor),
+            _ => BuildEmptyState(descriptor),
         };
     }
 
@@ -133,31 +133,115 @@ public sealed class TabContentFactory : ITabContentFactory
         return created;
     }
 
-    private Control BuildPlaceholder(Core.Layout.TabDescriptor descriptor) => new Views.PlaceholderView
+    /// <summary>
+    /// 当前条件下确实没有内容可显示时的空状态。
+    ///
+    /// 这里刻意不再写"该标签页尚未实现，归属里程碑 M?"：
+    /// 那种文案只描述了我们自己的进度，没有告诉用户任何可做的事。
+    /// 现在每个空状态都说明"这个面板用来做什么、为什么现在是空的、下一步做什么"。
+    /// </summary>
+    private Control BuildEmptyState(Core.Layout.TabDescriptor descriptor)
     {
-        DataContext = new PlaceholderViewModel
+        var panel = PanelDescription(descriptor.ImplementationKey);
+
+        return new Views.EmptyStateView
         {
-            Title = GetTitle(descriptor),
-            Message = _localize("placeholder.message"),
-            PlannedMilestone = MilestoneFor(descriptor.ImplementationKey),
-            Note = descriptor.Id,
-        },
-    };
+            DataContext = new EmptyStateViewModel
+            {
+                Title = GetTitle(descriptor),
+                Description = _localize(panel.DescriptionKey),
+                Reason = _localize(panel.ReasonKey),
+                Suggestion = _localize(panel.SuggestionKey),
+                ActionLabel = panel.ActionKey is null ? string.Empty : _localize(panel.ActionKey),
+                Action = panel.ActionKey is null ? null : RequestAction(panel.ActionKey),
+            },
+        };
+    }
 
     /// <summary>
-    /// 标签页归属的里程碑，来自 DESIGN.md 的功能清单。
-    /// 让占位内容能告诉用户"什么时候会有"，而不是永远一句"敬请期待"。
+    /// 每个面板的说明文案与可用动作。
+    ///
+    /// 用实现键而不是标签页 id 作索引：同一个面板可能出现在多个布局里，
+    /// 说明文案应当跟着面板走而不是跟着位置走。
     /// </summary>
-    private static string MilestoneFor(string implementationKey) => implementationKey switch
+    private static (string DescriptionKey, string ReasonKey, string SuggestionKey, string? ActionKey) PanelDescription(
+        string implementationKey) => implementationKey switch
     {
-        "projectFiles" or "projectTemplates" or "projectSymbols" => "M4",
-        "inspectorProperties" or "inspectorArtifact" => "M2",
-        "inspectorLayoutMap" => "M3",
-        "outputBuild" or "outputProblems" or "terminalShell" or "terminalSerial" => "M2",
-        "debugConsole" or "debugMonitor" => "M3",
-        "debugStack" or "debugVariables" or "debugRegisters" or "debugBreakpoints" or "debugMemory" => "M3",
-        "aiAgent" => "M5",
-        "codeEditor" => "M1",
-        _ => "M2",
+        "inspectorProperties" => (
+            "emptyStates.inspectorProperties.description",
+            "emptyStates.inspectorProperties.reason",
+            "emptyStates.inspectorProperties.suggestion",
+            null),
+
+        "inspectorArtifact" => (
+            "emptyStates.inspectorArtifact.description",
+            "emptyStates.inspectorArtifact.reason",
+            "emptyStates.inspectorArtifact.suggestion",
+            null),
+
+        "inspectorLayoutMap" => (
+            "emptyStates.inspectorLayoutMap.description",
+            "emptyStates.inspectorLayoutMap.reason",
+            "emptyStates.inspectorLayoutMap.suggestion",
+            null),
+
+        "outputBuild" => (
+            "emptyStates.outputBuild.description",
+            "emptyStates.outputBuild.reason",
+            "emptyStates.outputBuild.suggestion",
+            null),
+
+        "outputProblems" => (
+            "emptyStates.outputProblems.description",
+            "emptyStates.outputProblems.reason",
+            "emptyStates.outputProblems.suggestion",
+            null),
+
+        "terminalShell" or "terminalSerial" => (
+            "emptyStates.terminal.description",
+            "emptyStates.terminal.reason",
+            "emptyStates.terminal.suggestion",
+            null),
+
+        "debugConsole" or "debugMonitor" or "debugStack" or "debugVariables"
+            or "debugRegisters" or "debugBreakpoints" or "debugMemory" => (
+            "emptyStates.debug.description",
+            "emptyStates.debug.reason",
+            "emptyStates.debug.suggestion",
+            null),
+
+        "projectSymbols" => (
+            "emptyStates.projectSymbols.description",
+            "emptyStates.projectSymbols.reason",
+            "emptyStates.projectSymbols.suggestion",
+            null),
+
+        "projectTemplates" => (
+            "emptyStates.projectTemplates.description",
+            "emptyStates.projectTemplates.reason",
+            "emptyStates.projectTemplates.suggestion",
+            "emptyStates.projectTemplates.action"),
+
+        "aiAgent" => (
+            "emptyStates.aiAgent.description",
+            "emptyStates.aiAgent.reason",
+            "emptyStates.aiAgent.suggestion",
+            null),
+
+        _ => (
+            "emptyStates.generic.description",
+            "emptyStates.generic.reason",
+            "emptyStates.generic.suggestion",
+            null),
     };
+
+    /// <summary>面板动作：由宿主窗口接管的请求（对话框等留在视图层）。</summary>
+    private Action? RequestAction(string actionKey) => actionKey switch
+    {
+        "emptyStates.projectTemplates.action" => () => NewProjectRequested?.Invoke(this, EventArgs.Empty),
+        _ => null,
+    };
+
+    /// <summary>"新建项目"的请求事件；由窗口接管目录选择与向导。</summary>
+    public event EventHandler? NewProjectRequested;
 }

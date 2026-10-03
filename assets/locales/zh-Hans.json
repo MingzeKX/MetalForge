@@ -4,6 +4,64 @@
   "displayName": "简体中文",
   "rightToLeft": false,
   "strings": {
+    "emptyStates": {
+      "generic": {
+        "description": "这个面板会显示与当前上下文相关的内容。",
+        "reason": "当前没有可显示的内容。",
+        "suggestion": "先打开一个项目，或在上方菜单里选择要执行的操作。"
+      },
+      "inspectorProperties": {
+        "description": "这里显示当前选中项的属性：文件的类型与大小、函数的签名、变量的类型与地址。",
+        "reason": "还没有选中任何东西。",
+        "suggestion": "在左侧项目树里点选一个文件，或在编辑器里把光标移到某个符号上。"
+      },
+      "inspectorArtifact": {
+        "description": "这里显示构建产物的结构：ELF 或 PE 的程序头、节表、入口地址、内存占用。",
+        "reason": "还没有构建产物。",
+        "suggestion": "先按 Ctrl+Shift+B 构建，产物生成后这里会列出它的结构与布局。"
+      },
+      "inspectorLayoutMap": {
+        "description": "这里按链接脚本把各段画成内存布局图，用来一眼看出哪里放不下、哪里对齐浪费了空间。",
+        "reason": "还没有可解析的链接脚本与产物。",
+        "suggestion": "构建一次之后，这里会按产物里的实际节地址绘制布局。"
+      },
+      "outputBuild": {
+        "description": "这里显示构建过程的完整输出，包括编译器与链接器的原始信息。",
+        "reason": "还没有执行过构建。",
+        "suggestion": "按 Ctrl+Shift+B 开始构建；输出会逐行出现在这里。"
+      },
+      "outputProblems": {
+        "description": "这里显示构建诊断：错误、警告与它们所在的文件与行号。",
+        "reason": "还没有任何诊断。",
+        "suggestion": "构建一次即可。构建成功时这里保持为空 —— 这正是期望的结果。"
+      },
+      "terminal": {
+        "description": "这里是与外部程序交互的地方：脚本终端、QEMU 的串口输出、GDB 的交互会话。",
+        "reason": "还没有启动任何进程。",
+        "suggestion": "构建之后按 F5 运行，串口输出会出现在这里。"
+      },
+      "debug": {
+        "description": "这里显示调试会话的状态：调用栈、变量、寄存器、内存与断点。",
+        "reason": "没有正在进行的调试会话。",
+        "suggestion": "运行起来之后按「启动调试」接入 GDB，这些面板会随执行自动刷新。"
+      },
+      "projectSymbols": {
+        "description": "这里列出项目里的符号：函数、全局变量、宏定义，用于快速跳转。",
+        "reason": "还没有建立符号索引。",
+        "suggestion": "符号索引基于编译数据库建立，构建一次之后即可使用。"
+      },
+      "projectTemplates": {
+        "description": "这里可以从模板生成一个新的 OSDev 项目。模板会按目标架构生成可构建的骨架。",
+        "reason": "还没有打开项目。",
+        "suggestion": "点下面的按钮，选择目录与目标架构即可生成。",
+        "action": "新建项目…"
+      },
+      "aiAgent": {
+        "description": "这里是与 AI 助手对话的地方，可以就当前文件提问、生成代码或解释构建错误。",
+        "reason": "还没有配置模型提供方。",
+        "suggestion": "在「设置」里选择提供方（默认支持本地 Ollama，不需要联网）。"
+      }
+    },
     "splash": {
       "loadingConfiguration": "正在加载配置…",
       "loadingFonts": "正在准备字体…",
@@ -172,9 +230,6 @@
       "creditsTitle": "技术致谢",
       "linksTitle": "相关链接",
       "noDiagnostics": "配置无异常。"
-    },
-    "placeholder": {
-      "message": "该标签页尚未实现。它的归属里程碑见下方标记："
     },
     "editor": {
       "untitled": "未命名",

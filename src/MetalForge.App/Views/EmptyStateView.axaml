@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             x:Class="MetalForge.App.Views.EmptyStateView"
+             x:DataType="vm:EmptyStateViewModel">
+  <ScrollViewer>
+    <StackPanel Margin="{DynamicResource MfPanelPadding}" Spacing="8" VerticalAlignment="Top">
+      <TextBlock Classes="heading" Text="{Binding Title}" />
+
+      <TextBlock Classes="body" Text="{Binding Description}" TextWrapping="Wrap" />
+
+      <TextBlock Classes="status-value" Text="{Binding Reason}" TextWrapping="Wrap" Margin="0,8,0,0" />
+
+      <TextBlock Classes="panel-placeholder" Text="{Binding Suggestion}" TextWrapping="Wrap" />
+
+      <Button Classes="toolbar-button"
+              Content="{Binding ActionLabel}"
+              Command="{Binding InvokeCommand}"
+              IsVisible="{Binding HasAction}"
+              HorizontalAlignment="Left"
+              Margin="0,8,0,0" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

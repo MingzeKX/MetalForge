@@ -4,6 +4,64 @@
   "displayName": "English",
   "rightToLeft": false,
   "strings": {
+    "emptyStates": {
+      "generic": {
+        "description": "This panel shows content related to the current context.",
+        "reason": "There is nothing to show right now.",
+        "suggestion": "Open a project first, or pick an action from the menu above."
+      },
+      "inspectorProperties": {
+        "description": "Properties of the current selection: file type and size, function signature, variable type and address.",
+        "reason": "Nothing is selected.",
+        "suggestion": "Pick a file in the project tree, or place the caret on a symbol in the editor."
+      },
+      "inspectorArtifact": {
+        "description": "Structure of the build artifact: ELF or PE headers, section table, entry point, memory footprint.",
+        "reason": "There is no build artifact yet.",
+        "suggestion": "Press Ctrl+Shift+B to build; this panel will then list the artifact structure."
+      },
+      "inspectorLayoutMap": {
+        "description": "Draws the sections as a memory map from the linker script, so you can see what does not fit and where alignment wastes space.",
+        "reason": "No linker script and artifact to analyse yet.",
+        "suggestion": "Build once; the map is drawn from the real section addresses in the artifact."
+      },
+      "outputBuild": {
+        "description": "Full build output, including the raw compiler and linker messages.",
+        "reason": "No build has run yet.",
+        "suggestion": "Press Ctrl+Shift+B; output appears here line by line."
+      },
+      "outputProblems": {
+        "description": "Build diagnostics: errors, warnings, and the file and line they refer to.",
+        "reason": "No diagnostics yet.",
+        "suggestion": "Build once. If the build succeeds this panel stays empty, which is the expected result."
+      },
+      "terminal": {
+        "description": "Where you interact with external programs: script shells, QEMU serial output, interactive GDB sessions.",
+        "reason": "No process has been started.",
+        "suggestion": "Build and press F5; serial output appears here."
+      },
+      "debug": {
+        "description": "Debug session state: call stack, variables, registers, memory, and breakpoints.",
+        "reason": "No debug session is running.",
+        "suggestion": "Run the target, then start debugging; these panels refresh as execution proceeds."
+      },
+      "projectSymbols": {
+        "description": "Symbols in the project: functions, globals, macros, for quick navigation.",
+        "reason": "No symbol index has been built.",
+        "suggestion": "The index is built from the compilation database, which appears after the first build."
+      },
+      "projectTemplates": {
+        "description": "Generate a new OSDev project from a template. Templates produce a buildable skeleton for the target architecture.",
+        "reason": "No project is open.",
+        "suggestion": "Use the button below to pick a directory and a target architecture.",
+        "action": "New Project…"
+      },
+      "aiAgent": {
+        "description": "Talk to an AI assistant about the current file: ask questions, generate code, or explain build errors.",
+        "reason": "No model provider is configured.",
+        "suggestion": "Choose a provider in Settings. Local Ollama is supported and needs no network."
+      }
+    },
     "splash": {
       "loadingConfiguration": "Loading configuration…",
       "loadingFonts": "Preparing fonts…",
@@ -172,9 +230,6 @@
       "creditsTitle": "Built with",
       "linksTitle": "Related links",
       "noDiagnostics": "No configuration problems."
-    },
-    "placeholder": {
-      "message": "This tab is not implemented yet. Its target milestone is shown below:"
     },
     "editor": {
       "untitled": "Untitled",
