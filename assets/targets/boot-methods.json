@@ -1,0 +1,118 @@
+{
+  "$schema": "./schema/boot-methods.schema.json",
+  "version": 1,
+  "bootMethods": [
+    {
+      "id": "uefi",
+      "displayName": "UEFI (OVMF)",
+      "description": "以 PE32+ 可执行文件被固件直接加载；MetalForge 最擅长的一环。",
+      "artifactKind": "efi",
+      "requiresFirmware": true,
+      "firmwareKind": "ovmf",
+      "requiredTools": ["qemu-system-x86_64"],
+      "supportedArchitectureIds": ["x86_64", "aarch64"],
+      "linkerScriptTemplate": "uefi-pe.ld",
+      "qemuArguments": [
+        "-drive", "if=pflash,format=raw,readonly=on,file={firmwareCode}",
+        "-drive", "if=pflash,format=raw,file={firmwareVarsCopy}"
+      ],
+      "notes": "EFI 应用用 MinGW-w64 GCC 或 clang --target=x86_64-w64-mingw32 编译为 PE32+；AVX 指令会导致部分固件异常。"
+    },
+    {
+      "id": "multiboot2",
+      "displayName": "Multiboot 2 (GRUB)",
+      "description": "GRUB 2 引导；Multiboot2 头提供内存映射与命令行。",
+      "artifactKind": "iso",
+      "requiresFirmware": false,
+      "requiredTools": [],
+      "supportedArchitectureIds": ["x86_64", "i686"],
+      "linkerScriptTemplate": "kernel-higher-half.ld",
+      "qemuArguments": ["-cdrom", "{artifact}"],
+      "notes": "Multiboot2 头必须落在镜像前 32KB 内，且需 8 字节对齐。"
+    },
+    {
+      "id": "multiboot",
+      "displayName": "Multiboot 1 (GRUB)",
+      "description": "GRUB 2 引导的传统 Multiboot 协议；工具链与文档最成熟。",
+      "artifactKind": "iso",
+      "requiresFirmware": false,
+      "requiredTools": [],
+      "supportedArchitectureIds": ["x86_64", "i686"],
+      "linkerScriptTemplate": "kernel-higher-half.ld",
+      "qemuArguments": ["-cdrom", "{artifact}"],
+      "notes": "Multiboot 头必须落在前 8KB 内。"
+    },
+    {
+      "id": "bios_mbr",
+      "displayName": "BIOS / MBR",
+      "description": "传统 512 字节引导扇区，最后两字节为 0xAA55。",
+      "artifactKind": "diskImage",
+      "requiresFirmware": false,
+      "requiredTools": [],
+      "supportedArchitectureIds": ["x86_64", "i686"],
+      "linkerScriptTemplate": "boot-sector.ld",
+      "qemuArguments": ["-drive", "format=raw,file={artifact}"],
+      "notes": "引导扇区受 512 字节限制；第二阶段加载器通常紧随其后。"
+    },
+    {
+      "id": "u_boot",
+      "displayName": "U-Boot",
+      "description": "嵌入式与 ARM/RISC-V 常用引导程序；支持 FIT 镜像与脚本。",
+      "artifactKind": "flatBinary",
+      "requiresFirmware": false,
+      "requiredTools": [],
+      "supportedArchitectureIds": ["aarch64", "arm32", "riscv64", "riscv32"],
+      "linkerScriptTemplate": "kernel-load-addr.ld",
+      "qemuArguments": ["-bios", "{ubootBinary}", "-kernel", "{artifact}"],
+      "notes": "U-Boot 需在外部获取或自行构建；MetalForge 只负责生成骨架与调用。"
+    },
+    {
+      "id": "coreboot",
+      "displayName": "coreboot payload",
+      "description": "coreboot 作为固件，内核作为 payload。",
+      "artifactKind": "flatBinary",
+      "requiresFirmware": true,
+      "firmwareKind": "coreboot",
+      "requiredTools": [],
+      "supportedArchitectureIds": ["x86_64", "i686"],
+      "linkerScriptTemplate": "kernel-load-addr.ld",
+      "qemuArguments": ["-bios", "{firmwareRom}"],
+      "notes": "coreboot 需外部构建；payload 类型（ELF 或 flat binary）必须与配置一致。"
+    },
+    {
+      "id": "direct_bare",
+      "displayName": "直接裸机（-kernel）",
+      "description": "无引导程序，QEMU 直接把镜像加载到内存；迭代最快。",
+      "artifactKind": "elf",
+      "requiresFirmware": false,
+      "requiredTools": [],
+      "supportedArchitectureIds": ["x86_64", "i686", "aarch64", "arm32", "riscv64", "riscv32", "cortex_m", "esp32"],
+      "linkerScriptTemplate": "kernel-load-addr.ld",
+      "qemuArguments": ["-kernel", "{artifact}"],
+      "notes": "适合早期内核开发；缺少引导程序提供的内存映射与命令行。"
+    },
+    {
+      "id": "openocd_flash",
+      "displayName": "OpenOCD 烧录（JTAG/SWD）",
+      "description": "通过调试探针把固件写入目标板 Flash；不是引导方式，而是交付路径。",
+      "artifactKind": "firmware",
+      "requiresFirmware": false,
+      "requiredTools": ["openocd"],
+      "supportedArchitectureIds": ["cortex_m", "riscv32", "esp32"],
+      "linkerScriptTemplate": "mcu-flash.ld",
+      "qemuArguments": [],
+      "notes": "需要目标板配置文件（interface + target）与正确的 Flash 基址。"
+    },
+    {
+      "id": "edk2_module",
+      "displayName": "EDK2 模块",
+      "description": "作为 EDK2 树内的 DXE 驱动/应用构建，而不是独立镜像。",
+      "artifactKind": "efi",
+      "requiresFirmware": true,
+      "firmwareKind": "edk2",
+      "requiredTools": [],
+      "supportedArchitectureIds": ["x86_64", "aarch64"],
+      "notes": "需要 EDK2 源码树与其 BaseTools；MetalForge 负责生成 INF/DSC 片段并调用其构建脚本。"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/architectures.schema.json",
+  "title": "MetalForge 目标架构矩阵",
+  "description": "声明每种架构的目标三元组、默认工具链、QEMU 参数与必需编译选项。新增架构只需在此追加一项。",
+  "type": "object",
+  "required": ["version", "architectures"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "architectures": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/architecture" }
+    }
+  },
+  "$defs": {
+    "architecture": {
+      "type": "object",
+      "required": [
+        "id", "displayName", "targetTriple", "preferredToolchainId",
+        "bitness", "endianness", "defaultBootMethodId", "supportedBootMethodIds",
+        "qemuSystemExecutable", "requiredCompilerFlags"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 400 },
+        "targetTriple": { "type": "string", "minLength": 3, "maxLength": 60 },
+        "alternativeTargetTriples": {
+          "type": "array",
+          "maxItems": 6,
+          "items": { "type": "string", "maxLength": 60 }
+        },
+        "preferredToolchainId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+        "alternativeToolchainIds": {
+          "type": "array",
+          "maxItems": 6,
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }
+        },
+        "bitness": { "enum": [16, 32, 64] },
+        "endianness": { "enum": ["little", "big"] },
+        "defaultBootMethodId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$" },
+        "supportedBootMethodIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$" }
+        },
+        "defaultArtifactKind": { "type": "string", "maxLength": 60 },
+        "qemuSystemExecutable": { "type": "string", "minLength": 3, "maxLength": 60 },
+        "qemuMachine": { "type": "string", "maxLength": 60 },
+        "qemuCpu": { "type": "string", "maxLength": 60 },
+        "requiredCompilerFlags": {
+          "type": "array",
+          "maxItems": 24,
+          "items": { "type": "string", "maxLength": 120 }
+        },
+        "abiNotes": { "type": "string", "maxLength": 600 }
+      }
+    }
+  }
+}

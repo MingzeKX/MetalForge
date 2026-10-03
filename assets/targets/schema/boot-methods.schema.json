@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metalforge.local/schema/boot-methods.schema.json",
+  "title": "MetalForge 引导方式矩阵",
+  "description": "声明每种引导方式需要什么固件与工具、生成什么产物、QEMU 参数模板长什么样。新增引导方式只需在此追加一项。",
+  "type": "object",
+  "required": ["version", "bootMethods"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "bootMethods": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/bootMethod" }
+    }
+  },
+  "$defs": {
+    "bootMethod": {
+      "type": "object",
+      "required": ["id", "displayName", "description", "artifactKind", "supportedArchitectureIds"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_]*$" },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "description": { "type": "string", "minLength": 8, "maxLength": 400 },
+        "artifactKind": {
+          "enum": ["efi", "iso", "diskImage", "elf", "flatBinary", "firmware"]
+        },
+        "requiresFirmware": { "type": "boolean" },
+        "firmwareKind": {
+          "enum": ["ovmf", "edk2", "coreboot", "seabios", "u_boot", "opensbi"]
+        },
+        "requiredTools": {
+          "type": "array",
+          "maxItems": 12,
+          "items": { "type": "string", "maxLength": 60 }
+        },
+        "supportedArchitectureIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "maxLength": 40 }
+        },
+        "linkerScriptTemplate": { "type": "string", "maxLength": 120 },
+        "qemuArguments": {
+          "type": "array",
+          "maxItems": 24,
+          "items": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "可用占位符：{artifact} {firmwareCode} {firmwareVarsCopy} {firmwareRom} {ubootBinary}"
+          }
+        },
+        "notes": { "type": "string", "maxLength": 600 }
+      }
+    }
+  }
+}
