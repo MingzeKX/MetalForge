@@ -1,0 +1,42 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:MetalForge.App.Views"
+        x:Class="MetalForge.App.Views.SplashWindow"
+        x:DataType="views:SplashViewModel"
+        Width="420" Height="248"
+        CanResize="False"
+        CanMinimize="False"
+        CanMaximize="False"
+        ShowInTaskbar="False"
+        SystemDecorations="None"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent"
+        Topmost="True">
+  <!--
+    启动画面。
+    存在的理由：本机实测配置加载 + 工具链探测 + 高亮定义解析合计约 1 秒，
+    这段时间没有反馈会让用户以为没启动成功（尤其是在慢速磁盘上）。
+    内容全部来自品牌配置与主题资源，因此换语言/换主题会自动跟着变。
+  -->
+  <Border Classes="splash-surface" Margin="12">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="28,24">
+
+      <StackPanel Grid.Row="0" Spacing="2">
+        <TextBlock Classes="splash-title" Text="{Binding AppName}" />
+        <TextBlock Classes="splash-subtitle" Text="{Binding Description}" TextWrapping="Wrap" />
+      </StackPanel>
+
+      <TextBlock Grid.Row="1"
+                 Classes="splash-status"
+                 Text="{Binding StatusText}"
+                 VerticalAlignment="Center"
+                 TextWrapping="Wrap" />
+
+      <TextBlock Grid.Row="2"
+                 Classes="splash-version"
+                 Text="{Binding VersionText}"
+                 IsVisible="{Binding ShowVersion}"
+                 HorizontalAlignment="Right" />
+    </Grid>
+  </Border>
+</Window>

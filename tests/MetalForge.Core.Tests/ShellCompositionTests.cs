@@ -3,6 +3,7 @@ using MetalForge.Core.Configuration;
 using MetalForge.Core.Layout;
 using MetalForge.Core.Localization;
 using MetalForge.Core.Theming;
+using MetalForge.Core.Workspace;
 
 namespace MetalForge.Core.Tests;
 
@@ -20,6 +21,7 @@ public sealed class ShellCompositionTests : IDisposable
     private readonly AssetResolver _resolver;
     private readonly ConfigurationService _configuration;
     private readonly LocalizationService _localization;
+    private readonly ProjectService _projects;
 
     public ShellCompositionTests()
     {
@@ -37,6 +39,8 @@ public sealed class ShellCompositionTests : IDisposable
 
         _localization = new LocalizationService(_resolver, new LocalizationOptions());
         _localization.Reload();
+
+        _projects = new ProjectService(_resolver);
     }
 
     private ShellViewModel CreateShell()
@@ -53,7 +57,9 @@ public sealed class ShellCompositionTests : IDisposable
                 () => new AboutViewModel(_localization),
                 () => new SettingsViewModel(_configuration, _localization),
                 () => null,
-                key => _localization[key]));
+                key => _localization[key]),
+            _projects,
+            new ProjectExplorerViewModel(_projects, key => _localization[key]));
 
     [Fact]
     public void Rebuild_ProducesMenuToolbarAndStatusEntries()
@@ -275,6 +281,7 @@ public sealed class ShellCompositionTests : IDisposable
 
     public void Dispose()
     {
+        _projects.Dispose();
         _configuration.Dispose();
         _localization.Dispose();
 

@@ -22,6 +22,8 @@ public sealed partial class ShellViewModel : ObservableObject
     private readonly ILocalizationService _localization;
     private readonly Func<LayoutPreset, Control> _layoutFactory;
     private readonly EditorViewModel _editor;
+    private readonly Core.Workspace.IProjectService _projects;
+    private readonly ProjectExplorerViewModel _explorer;
 
     [ObservableProperty]
     private string _windowTitle = "MetalForge";
@@ -68,22 +70,33 @@ public sealed partial class ShellViewModel : ObservableObject
         ILocalizationService localization,
         Func<LayoutPreset, Control> layoutFactory,
         EditorViewModel editor,
-        DocumentAreaViewModel documentArea)
+        DocumentAreaViewModel documentArea,
+        Core.Workspace.IProjectService projects,
+        ProjectExplorerViewModel explorer)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(localization);
         ArgumentNullException.ThrowIfNull(layoutFactory);
         ArgumentNullException.ThrowIfNull(editor);
         ArgumentNullException.ThrowIfNull(documentArea);
+        ArgumentNullException.ThrowIfNull(projects);
+        ArgumentNullException.ThrowIfNull(explorer);
 
         _configuration = configuration;
         _localization = localization;
         _layoutFactory = layoutFactory;
         _editor = editor;
+        _projects = projects;
+        _explorer = explorer;
         DocumentArea = documentArea;
+
+        // 项目浏览器里双击文件 → 在编辑器里打开。
+        // 两个 ViewModel 互相不知道对方，由外壳牵线，避免双向依赖。
+        _explorer.FileActivated += (_, path) => OpenInEditor(path);
 
         _localization.LanguageChanged += (_, _) => RebuildLocalizedContent();
         _configuration.ConfigurationChanged += (_, _) => RebuildLocalizedContent();
+        _projects.ProjectChanged += (_, _) => OnProjectChanged();
     }
 
     /// <summary>文档区（多标签编辑器）。它是"已打开的文件"的唯一真相源。</summary>
@@ -106,6 +119,44 @@ public sealed partial class ShellViewModel : ObservableObject
     /// 这是保持 ViewModel 可单元测试的分界线。
     /// </summary>
     public event EventHandler? FileOpenRequested;
+
+    /// <summary>"打开项目…"的请求事件。同样由宿主接管目录选择对话框。</summary>
+    public event EventHandler? ProjectOpenRequested;
+
+    /// <summary>当前项目根目录；未打开项目时为 null。</summary>
+    public string? CurrentProjectDirectory => _projects.Current?.RootDirectory;
+
+    /// <summary>
+    /// 打开一个项目目录。失败时项目服务会给出可读诊断，
+    /// 界面在项目浏览器里显示它们，而不是弹一个没有信息的错误框。
+    /// </summary>
+    public void OpenProject(string projectDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectDirectory);
+        _projects.Open(projectDirectory);
+    }
+
+    /// <summary>关闭当前项目。</summary>
+    [RelayCommand]
+    public void CloseProject() => _projects.Close();
+
+    private void OpenProjectRequested() => ProjectOpenRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
+    /// 项目打开/关闭后刷新与项目相关的界面内容：
+    /// 状态栏（架构 / 引导方式）与菜单可用性都要跟着变。
+    /// </summary>
+    private void OnProjectChanged()
+    {
+        if (_projects.Current is { } workspace)
+        {
+            // 让编辑器知道项目根：Ctrl+S 之外的相对路径引用、将来的语言服务都需要它。
+            ActiveEditorDocument?.SetProjectRoot(workspace.RootDirectory);
+        }
+
+        _explorer.Refresh();
+        Rebuild();
+    }
 
     /// <summary>按当前配置与语言重建全部界面内容。启动时与配置/语言变化时调用。</summary>
     public void Rebuild(LayoutPreset? layoutOverride = null)
@@ -275,9 +326,9 @@ public sealed partial class ShellViewModel : ObservableObject
     [
         Menu("menu.file.title",
             Item("menu.file.items.newProject"),
-            Item("menu.file.items.openProject"),
+            Item("menu.file.items.openProject", gesture: "Ctrl+Shift+O", Execute: OpenProjectRequested),
             Item("menu.file.items.openFile", gesture: "Ctrl+O", Execute: OpenFileRequested),
-            Item("menu.file.items.closeProject"),
+            Item("menu.file.items.closeProject", Execute: CloseProject, commandIdOverride: "file.closeProject"),
             Separator(),
             Item("menu.file.items.save", gesture: "Ctrl+S", Execute: SaveActiveDocument),
             Item("menu.file.items.saveAll", gesture: "Ctrl+Shift+S"),
@@ -380,8 +431,8 @@ public sealed partial class ShellViewModel : ObservableObject
         {
             var (label, value, enabled) = itemId switch
             {
-                "status.arch" => (_localization["status.arch"], _localization["status.noProject"], false),
-                "status.bootMethod" => (_localization["status.bootMethod"], _localization["status.noProject"], false),
+                "status.arch" => (_localization["status.arch"], ArchitectureStatusText(), HasProject),
+                "status.bootMethod" => (_localization["status.bootMethod"], BootMethodStatusText(), HasProject),
                 "status.configuration" => (_localization["status.configuration"], "—", false),
                 "status.toolchain" => (_localization["status.toolchain"], ToolchainSummary(), true),
                 "status.buildState" => (_localization["status.buildState"], _localization["status.buildIdle"], false),
@@ -427,11 +478,20 @@ public sealed partial class ShellViewModel : ObservableObject
         };
     }
 
+    /// <summary>是否已打开项目。</summary>
+    private bool HasProject => _projects.Current is not null;
+
+    /// <summary>状态栏的架构文本：未打开项目时显示"未打开项目"而不是空白。</summary>
+    private string ArchitectureStatusText()
+        => _projects.Current?.Architecture?.DisplayName ?? _localization["status.noProject"];
+
+    private string BootMethodStatusText()
+        => _projects.Current?.BootMethod?.DisplayName ?? _localization["status.noProject"];
+
     /// <summary>工具栏命令的可用性注册表。未实现的命令被显式禁用并给出原因。</summary>
-    private CommandItemViewModel ItemForCommand(string commandId) => commandId switch
-    {
+    private CommandItemViewModel ItemForCommand(string commandId) => commandId switch    {
         "project.new" => Item("menu.file.items.newProject", commandIdOverride: commandId),
-        "project.open" => Item("menu.file.items.openProject", commandIdOverride: commandId),
+        "project.open" => Item("menu.file.items.openProject", Execute: OpenProjectRequested, commandIdOverride: commandId),
         "build.build" => Item("menu.build.items.build", commandIdOverride: commandId),
         "build.rebuild" => Item("menu.build.items.rebuild", commandIdOverride: commandId),
         "build.clean" => Item("menu.build.items.clean", commandIdOverride: commandId),

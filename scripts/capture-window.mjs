@@ -45,6 +45,7 @@ function parseArguments(argv) {
     out: resolve(repositoryRoot, 'build/screenshots/window.png'),
     attach: false,
     close: false,
+    processId: null,
     waitSeconds: 20,
     settleMilliseconds: 1200,
     executable: resolve(repositoryRoot, 'build/Debug/MetalForge.App/bin/Debug/net10.0/MetalForge.exe'),
@@ -56,6 +57,7 @@ function parseArguments(argv) {
       case '--out': options.out = resolve(argv[++index]); break;
       case '--attach': options.attach = true; break;
       case '--close': options.close = true; break;
+      case '--pid': options.processId = Number(argv[++index]); break;
       case '--wait': options.waitSeconds = Number(argv[++index]); break;
       case '--exe': options.executable = resolve(argv[++index]); break;
       default: throw new Error(`Unknown argument: ${argument}`);
@@ -227,10 +229,22 @@ try {
   let handle;
   let processId;
 
-  if (options.attach) {
+  if (options.processId !== null) {
+    // Attach to an explicit process id.
+    //
+    // Needed because FindRunningWindow relies on MainWindowHandle, which is zero for
+    // windows with ShowInTaskbar=false (our splash window, for example). Those windows
+    // are still perfectly capturable if we are told which process owns them.
+    processId = options.processId;
+    handle = waitForWindow(processId, options.waitSeconds);
+    if (!handle) {
+      throw new Error(`Process ${processId} has no capturable window.`);
+    }
+    console.log(`Attached to PID ${processId}`);
+  } else if (options.attach) {
     const running = findRunningWindow();
     if (!running) {
-      throw new Error('No running MetalForge window found. Drop --attach to launch one.');
+      throw new Error('No running MetalForge window found. Use --pid, or drop --attach to launch one.');
     }
     ({ processId, handle } = running);
     console.log(`Attached to MetalForge (PID ${processId})`);

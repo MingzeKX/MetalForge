@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MetalForge.App.ViewModels"
+             x:Class="MetalForge.App.Views.ProjectExplorerView"
+             x:DataType="vm:ProjectExplorerViewModel">
+  <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="{DynamicResource MfPanelPadding}">
+
+    <StackPanel Grid.Row="0" Spacing="2">
+      <TextBlock Classes="heading" Text="{Binding Headline}" />
+      <TextBlock Classes="status-value"
+                 Text="{Binding TargetSummary}"
+                 IsVisible="{Binding HasProject}" />
+      <TextBlock Classes="panel-placeholder"
+                 Text="{Binding ProjectSummary}"
+                 IsVisible="{Binding HasProject}" />
+    </StackPanel>
+
+    <!-- 打开项目时的问题：颜色用 warning/danger，因为它们是"需要你处理"的事 -->
+    <ItemsControl Grid.Row="1" ItemsSource="{Binding Problems}" Margin="0,8,0,0">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Classes="body" Foreground="{DynamicResource MfWarning}" Text="{Binding}" TextWrapping="Wrap" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <!-- 未打开项目时的引导 -->
+    <TextBlock Grid.Row="2"
+               Classes="panel-placeholder"
+               Text="{Binding EmptyMessage}"
+               TextWrapping="Wrap"
+               VerticalAlignment="Top"
+               Margin="0,16,0,0"
+               IsVisible="{Binding HasProject, Converter={x:Static BoolConverters.Not}}" />
+
+    <!-- 文件树 -->
+    <ScrollViewer Grid.Row="2" IsVisible="{Binding HasProject}">
+      <TreeView x:Name="fileTree"
+                ItemsSource="{Binding RootNodes}"
+                Classes="project-tree"
+                Background="Transparent"
+                BorderThickness="0"
+                Padding="0">
+        <TreeView.ItemTemplate>
+          <TreeDataTemplate DataType="vm:ProjectTreeNodeViewModel" ItemsSource="{Binding Children}">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+              <TextBlock Classes="panel-placeholder"
+                         Text="{Binding SizeText}"
+                         VerticalAlignment="Center" />
+              <TextBlock Classes="panel-placeholder"
+                         Text="…"
+                         VerticalAlignment="Center"
+                         IsVisible="{Binding HasUnloadedChildren}"
+                         ToolTip.Tip="展开以加载子项" />
+            </StackPanel>
+          </TreeDataTemplate>
+        </TreeView.ItemTemplate>
+      </TreeView>
+    </ScrollViewer>
+
+    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="6" Margin="0,8,0,0"
+                IsVisible="{Binding HasProject}">
+      <Button Content="刷新" Command="{Binding ReloadCommand}" Classes="toolbar-button" />
+      <Button Content="全部展开" Command="{Binding ExpandAllCommand}" Classes="toolbar-button" />
+      <Button Content="全部收起" Command="{Binding CollapseAllCommand}" Classes="toolbar-button" />
+    </StackPanel>
+  </Grid>
+</UserControl>

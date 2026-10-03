@@ -64,7 +64,8 @@ public partial class DocumentAreaView : UserControl
 
         var tab = _viewModel.ActiveTab;
         var content = tab is null ? null : _viewModel.CreateContent(tab);
-        documentContentHost.Content = content;
+        documentContentHost.Child = content;
+
 
 
     }

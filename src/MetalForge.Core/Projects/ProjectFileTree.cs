@@ -13,6 +13,11 @@ public enum ProjectNodeKind
 /// 文件树中的一个节点。
 /// 子节点**按需加载**：OSDev 项目里 <c>build/</c> 可能有上万文件，
 /// 一次性递归枚举会让"打开项目"变成几秒钟的卡顿。
+///
+/// 两种使用方式：
+///   - <see cref="ProjectFileTree.ListChildren"/>：只枚举一层，用于超大目录或按需展开；
+///   - <see cref="ProjectFileTree.BuildTree"/>：一次构建到指定深度的整棵树，
+///     用于界面绑定（绑定需要节点自带 <see cref="Children"/>）。
 /// </summary>
 public sealed record ProjectNode
 {
@@ -34,6 +39,12 @@ public sealed record ProjectNode
 
     /// <summary>相对于项目根的路径，显示用。</summary>
     public required string RelativePath { get; init; }
+
+    /// <summary>子节点。仅 <see cref="ProjectFileTree.BuildTree"/> 构建的树会填充。</summary>
+    public IReadOnlyList<ProjectNode> Children { get; init; } = [];
+
+    /// <summary>因达到深度上限而未展开子项（界面上提示"展开以加载"）。</summary>
+    public bool IsTruncated { get; init; }
 
     public bool IsDirectory => Kind == ProjectNodeKind.Directory;
 }
@@ -86,6 +97,62 @@ public sealed class ProjectFileTree
             Kind = ProjectNodeKind.Directory,
             RelativePath = string.Empty,
             HasChildren = true,
+        };
+    }
+
+    /// <summary>
+    /// 构建到指定深度的整棵树。
+    ///
+    /// 深度只对**目录**计数：
+    /// <paramref name="directoryDepth"/> 为 1 表示"根目录 + 其直接子项（含文件）"，
+    /// 这样"常见项目结构一眼可读"而不必担心文件层级把深度耗尽。
+    /// 达到上限的目录会标记 <see cref="ProjectNode.IsTruncated"/>，
+    /// 界面可以据此提示"展开以加载"而不是看起来像空目录。
+    /// </summary>
+    public (ProjectNode Root, IReadOnlyList<Diagnostic> Diagnostics) BuildTree(
+        string projectDirectory,
+        int directoryDepth = 2)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectDirectory);
+        ArgumentOutOfRangeException.ThrowIfLessThan(directoryDepth, 1);
+
+        var full = Path.GetFullPath(projectDirectory);
+        var diagnostics = new List<Diagnostic>();
+        var root = ProjectFileTree.CreateRoot(full);
+
+        var expandedRoot = Expand(root, full, directoryDepth, diagnostics);
+        return (expandedRoot, diagnostics);
+    }
+
+    private ProjectNode Expand(ProjectNode directory, string projectRoot, int remainingDepth, List<Diagnostic> diagnostics)
+    {
+        var listing = ListChildren(directory.FullPath, projectRoot);
+        diagnostics.AddRange(listing.Diagnostics);
+
+        var children = new List<ProjectNode>(listing.Nodes.Count);
+
+        foreach (var child in listing.Nodes)
+        {
+            if (!child.IsDirectory)
+            {
+                children.Add(child);
+                continue;
+            }
+
+            if (remainingDepth <= 1)
+            {
+                // 到深度上限：保留条目但标记未展开，避免看起来像空目录。
+                children.Add(child with { IsTruncated = true });
+                continue;
+            }
+
+            children.Add(Expand(child, projectRoot, remainingDepth - 1, diagnostics));
+        }
+
+        return directory with
+        {
+            Children = children,
+            HasChildren = children.Count > 0,
         };
     }
 

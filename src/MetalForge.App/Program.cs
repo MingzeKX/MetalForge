@@ -107,6 +107,16 @@ internal static class Program
             return catalog;
         });
 
+        // 窗口几何记忆：写到用户配置目录，而不是改写随应用分发的品牌配置。
+        services.AddSingleton<Core.Workspace.IWindowStateStore>(provider =>
+            new Core.Workspace.WindowStateStore(provider.GetRequiredService<AssetResolver>()));
+        // 项目服务与项目浏览器。
+        services.AddSingleton<Core.Workspace.IProjectService>(provider =>
+            new Core.Workspace.ProjectService(provider.GetRequiredService<AssetResolver>()));
+
+        services.AddSingleton<ProjectExplorerViewModel>(provider => new ProjectExplorerViewModel(
+            provider.GetRequiredService<Core.Workspace.IProjectService>(),
+            key => provider.GetRequiredService<ILocalizationService>()[key]));
         services.AddSingleton<EditorViewModel>(provider => new EditorViewModel(
             provider.GetRequiredService<ILocalizationService>(),
             filePath => provider.GetRequiredService<SyntaxHighlightingCatalog>().FindForFile(filePath)));
@@ -122,6 +132,7 @@ internal static class Program
             provider.GetRequiredService<ToolchainHealthViewModel>,
             provider.GetRequiredService<AboutViewModel>,
             provider.GetRequiredService<SettingsViewModel>,
+            provider.GetRequiredService<ProjectExplorerViewModel>,
             provider.GetRequiredService<EditorViewModel>));
 
         // 文档区：它是"已打开的文件"的唯一真相源，因此必须在布局构建器之前注册。
@@ -138,9 +149,27 @@ internal static class Program
             var factory = provider.GetRequiredService<TabContentFactory>();
             var documentArea = provider.GetRequiredService<DocumentAreaViewModel>();
 
+            // 文档区控件**复用同一个实例**。
+            //
+            // 每次重建布局都新建一个 DocumentAreaView 会引入一个隐蔽的错误：
+            // 新实例订阅 ViewModel 的 ActiveTab，而旧实例（可能仍持有内容控件）
+            // 也在订阅；一旦内容被赋给已脱离视觉树的那个实例，界面就永远空白，
+            // 而所有日志都显示"内容创建成功"。实测正是如此。
+            //
+            // 控件只能有一个父节点，因此这里返回 null 表示"从原父节点摘除"。
+            var documentAreaView = new Views.DocumentAreaView { DataContext = documentArea };
+
             var builder = new LayoutControlBuilder(
                 factory,
-                () => new Views.DocumentAreaView { DataContext = documentArea });
+                () =>
+                {
+                    if (documentAreaView.Parent is Panel panel)
+                    {
+                        panel.Children.Remove(documentAreaView);
+                    }
+
+                    return documentAreaView;
+                });
 
             return (Func<LayoutPreset, Control>)(preset => builder.Build(preset.Root));
         });
@@ -150,7 +179,9 @@ internal static class Program
             provider.GetRequiredService<ILocalizationService>(),
             provider.GetRequiredService<Func<LayoutPreset, Control>>(),
             provider.GetRequiredService<EditorViewModel>(),
-            provider.GetRequiredService<DocumentAreaViewModel>()));
+            provider.GetRequiredService<DocumentAreaViewModel>(),
+            provider.GetRequiredService<Core.Workspace.IProjectService>(),
+            provider.GetRequiredService<ProjectExplorerViewModel>()));
 
         return services.BuildServiceProvider(new ServiceProviderOptions
         {

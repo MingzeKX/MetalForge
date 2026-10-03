@@ -40,6 +40,48 @@ public sealed partial class EditorDocumentViewModel : ObservableObject
     [ObservableProperty]
     private int _caretColumn = 1;
 
+    /// <summary>
+    /// 所属项目的根目录；null 表示文件不属于任何已打开的项目。
+    /// 显示相对路径、将来做工程级跳转都要用它。
+    /// 用可变属性而不是构造参数：先打开文件、后打开项目是常见顺序。
+    /// </summary>
+    [ObservableProperty]
+    private string? _projectRoot;
+
+    /// <summary>相对项目根的路径；无项目或文件在项目外时回退为文件名。</summary>
+    public string ProjectRelativePath
+    {
+        get
+        {
+            if (FilePath is null)
+            {
+                return Title;
+            }
+
+            if (ProjectRoot is null)
+            {
+                return Title;
+            }
+
+            var relative = Path.GetRelativePath(ProjectRoot, FilePath);
+
+            // 以 .. 开头表示文件在项目之外：这时相对路径没有意义，显示文件名。
+            return relative.StartsWith("..", StringComparison.Ordinal) ? Title : relative.Replace('\\', '/');
+        }
+    }
+
+    /// <summary>更新所属项目根目录。</summary>
+    public void SetProjectRoot(string? projectRoot)
+    {
+        if (string.Equals(ProjectRoot, projectRoot, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        ProjectRoot = projectRoot;
+        OnPropertyChanged(nameof(ProjectRelativePath));
+    }
+
     public EditorDocumentViewModel(
         string? filePath,
         string content,

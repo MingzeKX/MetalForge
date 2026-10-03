@@ -61,6 +61,21 @@ internal static partial class ApplicationLog
     [LoggerMessage(EventId = 1501, Level = LogLevel.Warning, Message = "命令行指定的文件无法打开：{FilePath}")]
     public static partial void StartupFileFailed(ILogger logger, string filePath, Exception exception);
 
+    [LoggerMessage(EventId = 1506, Level = LogLevel.Warning, Message = "启动画面处理失败（不影响主界面）")]
+    public static partial void SplashFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1505, Level = LogLevel.Warning, Message = "窗口图标文件不存在：{IconPath}")]
+    public static partial void IconFileMissing(ILogger logger, string iconPath);
+
+    [LoggerMessage(EventId = 1504, Level = LogLevel.Warning, Message = "窗口图标加载失败：{IconPath}")]
+    public static partial void IconLoadFailed(ILogger logger, string iconPath, Exception exception);
+
+    [LoggerMessage(EventId = 1502, Level = LogLevel.Information, Message = "已按命令行参数打开项目：{ProjectDirectory}")]
+    public static partial void StartupProjectOpened(ILogger logger, string projectDirectory);
+
+    [LoggerMessage(EventId = 1503, Level = LogLevel.Warning, Message = "命令行指定的项目目录不存在：{ProjectDirectory}")]
+    public static partial void StartupProjectMissing(ILogger logger, string projectDirectory);
+
     [LoggerMessage(
         EventId = 1202,
         Level = LogLevel.Information,

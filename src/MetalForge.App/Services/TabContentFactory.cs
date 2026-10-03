@@ -17,6 +17,7 @@ public sealed class TabContentFactory : ITabContentFactory
     private readonly Func<ToolchainHealthViewModel> _toolchainFactory;
     private readonly Func<AboutViewModel> _aboutFactory;
     private readonly Func<SettingsViewModel> _settingsFactory;
+    private readonly Func<ProjectExplorerViewModel> _explorerFactory;
     private readonly Func<EditorViewModel> _editorFactory;
 
     /// <summary>
@@ -35,6 +36,7 @@ public sealed class TabContentFactory : ITabContentFactory
         Func<ToolchainHealthViewModel> toolchainFactory,
         Func<AboutViewModel> aboutFactory,
         Func<SettingsViewModel> settingsFactory,
+        Func<ProjectExplorerViewModel> explorerFactory,
         Func<EditorViewModel> editorFactory)
     {
         ArgumentNullException.ThrowIfNull(localize);
@@ -42,6 +44,7 @@ public sealed class TabContentFactory : ITabContentFactory
         ArgumentNullException.ThrowIfNull(toolchainFactory);
         ArgumentNullException.ThrowIfNull(aboutFactory);
         ArgumentNullException.ThrowIfNull(settingsFactory);
+        ArgumentNullException.ThrowIfNull(explorerFactory);
         ArgumentNullException.ThrowIfNull(editorFactory);
 
         _localize = localize;
@@ -49,6 +52,7 @@ public sealed class TabContentFactory : ITabContentFactory
         _toolchainFactory = toolchainFactory;
         _aboutFactory = aboutFactory;
         _settingsFactory = settingsFactory;
+        _explorerFactory = explorerFactory;
         _editorFactory = editorFactory;
     }
 
@@ -72,9 +76,21 @@ public sealed class TabContentFactory : ITabContentFactory
             "toolchainHealth" => new Views.ToolchainHealthView { DataContext = ViewModelFor(descriptor, _toolchainFactory) },
             "about" => new Views.AboutView { DataContext = ViewModelFor(descriptor, _aboutFactory) },
             "settings" => new Views.SettingsView { DataContext = ViewModelFor(descriptor, _settingsFactory) },
+            "projectFiles" => CreateProjectExplorerView(descriptor),
             "codeEditor" => CreateEditorView(descriptor),
             _ => BuildPlaceholder(descriptor),
         };
+    }
+
+    /// <summary>
+    /// 项目文件浏览器。
+    /// 未打开项目时显示引导文字而不是空面板 —— 空面板是"东西坏了吗"的经典来源。
+    /// </summary>
+    private Control CreateProjectExplorerView(Core.Layout.TabDescriptor descriptor)
+    {
+        var explorer = ViewModelFor(descriptor, _explorerFactory);
+        explorer.Refresh();
+        return new Views.ProjectExplorerView { DataContext = explorer };
     }
 
     /// <summary>

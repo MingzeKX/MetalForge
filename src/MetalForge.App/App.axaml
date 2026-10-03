@@ -9,6 +9,15 @@
   -->
   <Application.Styles>
     <FluentTheme />
+
+    <!--
+      AvaloniaEdit 的控件模板必须显式引入。
+      不引入时 TextEditor 会正常参与布局（有尺寸、IsVisible 为 true、文档与高亮都已就绪），
+      却**不绘制任何内容**，屏幕上是一片纯背景色。
+      这个症状极具误导性：所有日志都显示一切正常。本项目在此排查了很久，故写明原因。
+    -->
+    <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
+
     <StyleInclude Source="avares://MetalForge/Styles.axaml" />
   </Application.Styles>
 </Application>

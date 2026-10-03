@@ -319,4 +319,32 @@
   <Style Selector="GridSplitter.layout-splitter">
     <Setter Property="Background" Value="Transparent" />
   </Style>
+  <!-- 启动画面：圆角卡片 + 主题配色，因此换主题时启动画面也跟着变 -->
+  <Style Selector="Border.splash-surface">
+    <Setter Property="Background" Value="{DynamicResource MfSurfaceRaised}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource MfBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{DynamicResource MfCornerRadius}" />
+  </Style>
+
+  <Style Selector="TextBlock.splash-title">
+    <Setter Property="Foreground" Value="{DynamicResource MfForeground}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeHeading}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="TextBlock.splash-subtitle">
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundMuted}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+  </Style>
+
+  <Style Selector="TextBlock.splash-status">
+    <Setter Property="Foreground" Value="{DynamicResource MfAccent}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeBase}" />
+  </Style>
+
+  <Style Selector="TextBlock.splash-version">
+    <Setter Property="Foreground" Value="{DynamicResource MfForegroundDisabled}" />
+    <Setter Property="FontSize" Value="{DynamicResource MfFontSizeSmall}" />
+  </Style>
 </Styles>

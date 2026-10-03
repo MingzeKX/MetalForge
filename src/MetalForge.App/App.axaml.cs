@@ -10,6 +10,7 @@ using MetalForge.Core.Configuration;
 using MetalForge.Core.Layout;
 using MetalForge.Core.Localization;
 using MetalForge.Core.Toolchains;
+using MetalForge.Core.Workspace;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -44,14 +45,37 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            var branding = _configuration.Current.Branding;
+
+            // 启动画面先出来：配置加载 + 工具链探测 + 高亮解析合计约 1 秒，
+            // 这段没有反馈的时间在慢速磁盘上会被当成"没启动成功"。
+            var splash = CreateSplashWindow(branding);
+            if (splash is not null)
+            {
+                desktop.MainWindow = splash;
+                splash.Show();
+            }
+
             _shell = Program.Services.GetRequiredService<ShellViewModel>();
             _shell.Rebuild();
 
-            desktop.MainWindow = CreateMainWindow(_shell);
+            var mainWindow = CreateMainWindow(_shell);
 
-            // 命令行传入文件路径时直接在编辑器里打开。
+            if (splash is null)
+            {
+                desktop.MainWindow = mainWindow;
+            }
+            else
+            {
+                // 注意：给 desktop.MainWindow 赋值会让 Avalonia **立即显示**那个窗口。
+                // 因此启动画面期间 MainWindow 仍指向启动画面；若在这里就换成主窗口，
+                // 用户会看到主窗口和启动画面同时出现在屏幕上。主窗口在交接那一刻才赋值。
+                BeginSplashHandoff(desktop, splash, mainWindow, branding.Splash);
+            }
+
+            // 命令行传入文件/项目时直接打开。
             // 这既是"用 MetalForge 打开"文件关联的基础，也让界面能在无人操作的情况下被验证。
-            OpenStartupFile(desktop.Args);
+            OpenStartupArguments(desktop.Args);
 
             desktop.Exit += OnDesktopExit;
         }
@@ -59,13 +83,137 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    /// <summary>把命令行里的第一个存在的文件路径交给编辑器。</summary>
-    private void OpenStartupFile(string[]? args)
+    /// <summary>按品牌配置创建启动画面；未启用时返回 null。</summary>
+    private Views.SplashWindow? CreateSplashWindow(AppBranding branding)
     {
-        var candidate = args?.FirstOrDefault(argument =>
-            !string.IsNullOrWhiteSpace(argument)
-            && !argument.StartsWith('-')
-            && File.Exists(argument));
+        if (!branding.Splash.Enabled)
+        {
+            return null;
+        }
+
+        try
+        {
+            var viewModel = Views.SplashViewModel.Create(branding, _localization, "splash.loadingConfiguration");
+            return new Views.SplashWindow(viewModel);
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
+        {
+            // 启动画面是装饰性的：建不出来就直接进主界面，不因此阻止启动。
+            ApplicationLog.SplashFailed(_logger, exception);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 启动画面 → 主窗口的交接。
+    ///
+    /// 最小时长用 <c>DispatcherTimer</c> 而不是阻塞等待：阻塞会冻结 UI 线程，
+    /// 启动画面本身也就动不了了（这正是"启动画面卡住"的常见成因）。
+    /// </summary>
+    private void BeginSplashHandoff(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        Views.SplashWindow splash,
+        Window mainWindow,
+        SplashBranding splashBranding)
+    {
+        var minimum = Math.Clamp(splashBranding.MinimumDurationMilliseconds, 0, 30000);
+
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(minimum) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            Console.WriteLine($"[splash] 交接开始（最小时长 {minimum}ms）");
+
+            try
+            {
+                mainWindow.Show();
+                Console.WriteLine($"[splash] 主窗口已 Show，IsVisible={mainWindow.IsVisible}");
+
+                // 显示之后再接管 MainWindow 引用，确保关闭启动画面后应用不会因为没有窗口而退出。
+                desktop.MainWindow = mainWindow;
+                Console.WriteLine($"[splash] MainWindow 已切换，IsVisible={mainWindow.IsVisible}");
+
+                splash.Close();
+                Console.WriteLine("[splash] 启动画面已关闭");
+            }
+            catch (Exception exception) when (exception is InvalidOperationException or ObjectDisposedException)
+            {
+                // 交接失败时至少要保证主窗口存在，否则应用会变成一个没有窗口的进程。
+                ApplicationLog.SplashFailed(_logger, exception);
+                TryShowMainWindow(desktop, mainWindow);
+            }
+        };
+
+        timer.Start();
+    }
+
+    private void TryShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop, Window mainWindow)
+    {
+        try
+        {
+            desktop.MainWindow = mainWindow;
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or ObjectDisposedException)
+        {
+            ApplicationLog.SplashFailed(_logger, exception);
+        }
+    }
+
+    /// <summary>
+    /// 处理命令行参数。
+    ///
+    /// 支持的形态：
+    ///   MetalForge.exe &lt;文件路径&gt;            在编辑器里打开文件
+    ///   MetalForge.exe --project &lt;目录&gt;       打开项目
+    ///   MetalForge.exe --project &lt;目录&gt; &lt;文件&gt;  打开项目并在编辑器里打开文件
+    ///
+    /// 参数无法识别时不报错：IDE 被"用错误的参数"启动一次不应变成一次崩溃。
+    /// </summary>
+    private void OpenStartupArguments(string[]? args)
+    {
+        if (args is null || args.Length == 0)
+        {
+            return;
+        }
+
+        string? projectDirectory = null;
+        var fileArguments = new List<string>();
+
+        for (var index = 0; index < args.Length; index++)
+        {
+            var argument = args[index];
+
+            if (string.Equals(argument, "--project", StringComparison.OrdinalIgnoreCase))
+            {
+                if (index + 1 < args.Length)
+                {
+                    projectDirectory = args[++index];
+                }
+
+                continue;
+            }
+
+            if (!argument.StartsWith('-'))
+            {
+                fileArguments.Add(argument);
+            }
+        }
+
+        if (projectDirectory is not null)
+        {
+            if (Directory.Exists(projectDirectory))
+            {
+                _shell.OpenProject(projectDirectory);
+                ApplicationLog.StartupProjectOpened(_logger, projectDirectory);
+            }
+            else
+            {
+                ApplicationLog.StartupProjectMissing(_logger, projectDirectory);
+            }
+        }
+
+        // 打开项目之后才打开文件：这样编辑器能立刻拿到项目根，显示相对路径。
+        var candidate = fileArguments.FirstOrDefault(File.Exists);
 
         if (candidate is null)
         {
@@ -167,7 +315,14 @@ public partial class App : Application
     private MainWindow CreateMainWindow(ShellViewModel shell)
     {
         var branding = _configuration.Current.Branding;
-        var window = new MainWindow
+
+        // 窗口几何与图标由 MainWindow 自己负责：
+        //   - 几何记忆需要"读取 → 应用 → 关闭时写回"三段逻辑，放在窗口里最直接；
+        //   - 图标文件路径要从资产目录解析，因此在这里算好再传进去。
+        var window = new MainWindow(
+            Program.Services.GetRequiredService<IWindowStateStore>(),
+            branding.Window,
+            ResolveIconPath(branding))
         {
             DataContext = shell,
             MinWidth = branding.Window.MinimumWidth,
@@ -175,17 +330,46 @@ public partial class App : Application
         };
 
         ApplyInitialSize(window, branding.Window);
-        window.Opened += (_, _) =>
-        {
-            LogWindowGeometry(window, "opened");
-            ClampToScreen(window);
-            LogWindowGeometry(window, "clamped");
-        };
+        window.Opened += (_, _) => LogWindowGeometry(window, "opened");
 
         // 启动后异步探测一次工具链：不阻塞首屏，也不在无工具时让界面显示"未知"。
         _ = ProbeToolchainAsync(window);
 
         return window;
+    }
+
+    /// <summary>解析窗口图标文件的绝对路径；未配置或不存在时返回 null。</summary>
+    private string? ResolveIconPath(AppBranding branding)
+    {
+        var relative = branding.Assets.Icon;
+        if (string.IsNullOrWhiteSpace(relative))
+        {
+            return null;
+        }
+
+        var resolver = Program.Services.GetRequiredService<AssetResolver>();
+
+        // 图标是二进制资产，不走"配置合并"那条路（Resolver 只解析 JSON 配置），
+        // 因此直接在三级目录里查找文件。顺序与配置一致：项目 → 用户 → 内置，
+        // 这样用户可以用自己的图标覆盖内置资源。
+        var relativePath = relative.Replace('/', Path.DirectorySeparatorChar);
+
+        string?[] candidates =
+        [
+            Path.Combine(resolver.UserDirectory, relativePath),
+            Path.Combine(resolver.BuiltInDirectory, relativePath),
+        ];
+
+        foreach (var candidate in candidates)
+        {
+            if (candidate is not null && File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        ApplicationLog.IconFileMissing(_logger, relative);
+        return null;
     }
 
     private async Task ProbeToolchainAsync(Window window)

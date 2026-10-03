@@ -16,6 +16,7 @@ public partial class EditorView : UserControl
 {
     private TextEditor? _editor;
     private EditorDocumentViewModel? _boundDocument;
+    private bool _documentApplied;
 
     public EditorView()
     {
@@ -29,6 +30,13 @@ public partial class EditorView : UserControl
         }
 
         DataContextChanged += OnDataContextChanged;
+
+        // 文档内容必须在控件附着到视觉树、且 TextEditor 模板已应用之后才能写入。
+        //
+        // 为什么：DataContext 在宿主创建控件时就设置了，那一刻 TextEditor 还是"空壳"，
+        // 它的模板尚未应用，因此我们写入的 Document 会被模板初始化时创建的文档覆盖 ——
+        // 表现为"标签页标题、语言、光标位置都对，但正文一片空白"（本项目真实踩过）。
+        AttachedToVisualTree += (_, _) => ApplyDocumentIfReady();
     }
 
     private void OnDataContextChanged(object? sender, EventArgs args)
@@ -44,6 +52,7 @@ public partial class EditorView : UserControl
         }
 
         _boundDocument = DataContext as EditorDocumentViewModel;
+        _documentApplied = false;
 
         if (_boundDocument is null)
         {
@@ -51,7 +60,27 @@ public partial class EditorView : UserControl
         }
 
         _boundDocument.PropertyChanged += OnDocumentPropertyChanged;
+        ApplyDocumentIfReady();
+    }
+
+    /// <summary>模板就绪后再写入文档；未就绪时留待 AttachedToVisualTree 处理。</summary>
+    private void ApplyDocumentIfReady()
+    {
+        if (_documentApplied || _editor is null || _boundDocument is null)
+        {
+            return;
+        }
+
+        // TextArea 为 null 说明模板还没应用，此时写入会被覆盖。
+        if (_editor.TextArea is null)
+        {
+            return;
+        }
+
+        _documentApplied = true;
         ApplyDocument(_boundDocument);
+
+
     }
 
     private void ApplyDocument(EditorDocumentViewModel document)

@@ -29,8 +29,15 @@
       </TabControl.ItemTemplate>
     </TabControl>
 
+    <!--
+      内容宿主必须把可用空间**传下去**。
+      这里不能用 ContentControl：它按"内容自身期望尺寸"布局（默认居中），
+      而编辑器（AvaloniaEdit）在无约束时报告 0 高度 ——
+      结果是宿主有尺寸、内容却是 0x0，屏幕上（以及截图里）一片空白。
+      Decorator 直接把可用空间交给子元素，因此内容会自动填满。
+    -->
     <Border Grid.Row="1" Classes="document-surface">
-      <ContentControl x:Name="documentContentHost" />
+      <Decorator x:Name="documentContentHost" />
     </Border>
   </Grid>
 </UserControl>

@@ -4,6 +4,13 @@
   "displayName": "English",
   "rightToLeft": false,
   "strings": {
+    "splash": {
+      "loadingConfiguration": "Loading configuration…",
+      "loadingFonts": "Preparing fonts…",
+      "probingToolchain": "Detecting toolchain…",
+      "preparingEditor": "Preparing editor…",
+      "ready": "Ready"
+    },
     "app": {
       "name": "MetalForge",
       "loading": "Loading configuration…",
@@ -180,6 +187,8 @@
       "caret": "Line {0}, Column {1}"
     },
     "explorer": {
+      "title": "Project",
+      "summary": "{0} files, {1:0.#} MB total",
       "empty": "No project open",
       "emptyHint": "Use File → New Project… to create your first OSDev project",
       "refresh": "Refresh",
